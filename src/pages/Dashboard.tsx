@@ -42,7 +42,7 @@ const Dashboard = () => {
     setIsAnalyzing(true);
     
     try {
-      const aiAnalysis = await aiService.generateHypothesis(logs, labWork, medicalTests);
+      const aiAnalysis = await aiService.generateHypothesis(logs);
       setAnalysis(aiAnalysis);
       
       toast({

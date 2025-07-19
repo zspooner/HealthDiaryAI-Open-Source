@@ -68,11 +68,7 @@ const LabWorkPage = () => {
       const savedHealthLogs = localStorage.getItem('healthLogs');
       const healthLogs: HealthLog[] = savedHealthLogs ? JSON.parse(savedHealthLogs) : [];
       
-      const aiAnalysis = await aiService.generateHypothesis(
-        healthLogs,
-        labWork,
-        medicalTests
-      );
+      const aiAnalysis = await aiService.generateHypothesis(healthLogs);
       setAnalysis(aiAnalysis);
       
       toast({
