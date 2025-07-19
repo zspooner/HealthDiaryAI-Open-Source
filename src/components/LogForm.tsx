@@ -6,16 +6,19 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Plus, X, Activity } from 'lucide-react';
+import { Calendar, Plus, X, Activity, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import type { HealthLog } from '@/types/health';
+import { useHealthData } from '@/hooks/useHealthData';
 
 interface LogFormProps {
-  onLogAdded: (log: HealthLog) => void;
+  onLogAdded?: () => void;
 }
 
 export function LogForm({ onLogAdded }: LogFormProps) {
   const { toast } = useToast();
+  const { saveHealthLog } = useHealthData();
+  
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [symptoms, setSymptoms] = useState<string[]>([]);
   const [medications, setMedications] = useState<string[]>([]);
   const [newSymptom, setNewSymptom] = useState('');
@@ -47,41 +50,63 @@ export function LogForm({ onLogAdded }: LogFormProps) {
     setMedications(medications.filter(m => m !== medication));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    const log: HealthLog = {
-      id: Date.now().toString(),
+    if (symptoms.length === 0) {
+      toast({
+        title: "Symptoms Required",
+        description: "Please add at least one symptom before saving.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+    
+    const logData = {
       date: new Date().toISOString(),
       symptoms,
       medications,
       severity: parseInt(severity),
       mood,
-      sleep: parseInt(sleep),
+      sleep: parseFloat(sleep),
       notes
     };
 
-    // Save to localStorage
-    const existingLogs = JSON.parse(localStorage.getItem('healthLogs') || '[]');
-    const updatedLogs = [log, ...existingLogs];
-    localStorage.setItem('healthLogs', JSON.stringify(updatedLogs));
+    try {
+      const savedLog = await saveHealthLog(logData);
+      
+      if (savedLog) {
+        // Reset form
+        setSymptoms([]);
+        setMedications([]);
+        setNewSymptom('');
+        setNewMedication('');
+        setSeverity('3');
+        setMood('');
+        setSleep('7');
+        setNotes('');
 
-    onLogAdded(log);
-    
-    // Reset form
-    setSymptoms([]);
-    setMedications([]);
-    setNewSymptom('');
-    setNewMedication('');
-    setSeverity('3');
-    setMood('');
-    setSleep('7');
-    setNotes('');
+        if (onLogAdded) {
+          onLogAdded();
+        }
 
-    toast({
-      title: "Health log recorded",
-      description: "Your daily health data has been saved successfully.",
-    });
+        toast({
+          title: "Health log recorded",
+          description: "Your daily health data has been saved successfully.",
+        });
+      }
+    } catch (error) {
+      console.error('Error saving health log:', error);
+      toast({
+        title: "Error saving log",
+        description: "There was an issue saving your health log. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -241,9 +266,16 @@ export function LogForm({ onLogAdded }: LogFormProps) {
           <Button 
             type="submit" 
             className="w-full bg-gradient-primary shadow-medical"
-            disabled={symptoms.length === 0}
+            disabled={symptoms.length === 0 || isSubmitting}
           >
-            Save Health Log
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              'Save Health Log'
+            )}
           </Button>
         </form>
       </CardContent>
