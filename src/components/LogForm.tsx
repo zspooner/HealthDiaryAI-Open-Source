@@ -8,17 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Calendar, Plus, X, Activity } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-
-interface HealthLog {
-  id: string;
-  date: string;
-  symptoms: string[];
-  medications: string[];
-  severity: number;
-  mood: string;
-  sleep: number;
-  notes: string;
-}
+import type { HealthLog } from '@/types/health';
 
 interface LogFormProps {
   onLogAdded: (log: HealthLog) => void;

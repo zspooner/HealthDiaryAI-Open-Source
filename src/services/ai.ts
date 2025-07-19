@@ -1,24 +1,5 @@
 import OpenAI from 'openai';
-
-interface HealthLog {
-  id: string;
-  date: string;
-  symptoms: string[];
-  medications: string[];
-  severity: number;
-  mood: string;
-  sleep: number;
-  notes: string;
-}
-
-interface HypothesisAnalysis {
-  patterns: string[];
-  potentialCauses: string[];
-  recommendations: string[];
-  riskFactors: string[];
-  nextSteps: string[];
-  disclaimer: string;
-}
+import type { HealthLog, LabWork, MedicalTest, HypothesisAnalysis } from '@/types/health';
 
 class AIService {
   private openai: OpenAI;
@@ -30,15 +11,21 @@ class AIService {
     });
   }
 
-  async generateHypothesis(logs: HealthLog[]): Promise<HypothesisAnalysis> {
+  async generateHypothesis(
+    logs: HealthLog[], 
+    labWork?: LabWork[], 
+    medicalTests?: MedicalTest[]
+  ): Promise<HypothesisAnalysis> {
     try {
       const logsSummary = this.formatLogsForAnalysis(logs);
+      const labWorkSummary = labWork ? this.formatLabWorkForAnalysis(labWork) : '';
+      const medicalTestsSummary = medicalTests ? this.formatMedicalTestsForAnalysis(medicalTests) : '';
       
-      const prompt = `You are a medical AI assistant analyzing health logs to identify patterns and generate hypotheses. 
+      const prompt = `You are a medical AI assistant analyzing comprehensive health data to identify patterns and generate hypotheses. 
 
 IMPORTANT: You are NOT providing medical diagnosis or treatment. You are analyzing patterns and suggesting possible correlations that should be discussed with healthcare professionals.
 
-Analyze the following health logs and provide insights in this exact JSON format:
+Analyze the following health data and provide insights in this exact JSON format:
 
 {
   "patterns": ["pattern1", "pattern2", "pattern3"],
@@ -46,16 +33,22 @@ Analyze the following health logs and provide insights in this exact JSON format
   "recommendations": ["recommendation 1", "recommendation 2", "recommendation 3"],
   "riskFactors": ["risk factor 1", "risk factor 2"],
   "nextSteps": ["next step 1", "next step 2", "next step 3"],
+  "labInsights": ["lab insight 1", "lab insight 2"],
+  "testCorrelations": ["correlation 1", "correlation 2"],
   "disclaimer": "This analysis is for informational purposes only and should not replace professional medical advice. Please consult with your healthcare provider about any concerns."
 }
 
-Health Logs Data:
-${logsSummary}
+${logs.length > 0 ? `Health Logs Data:\n${logsSummary}` : ''}
+${labWorkSummary ? `\nLab Work Data:\n${labWorkSummary}` : ''}
+${medicalTestsSummary ? `\nMedical Tests Data:\n${medicalTestsSummary}` : ''}
 
 Focus on:
 - Temporal patterns (time of day, day of week, seasonal)
 - Symptom correlations with sleep, mood, medications
+- Lab value trends and abnormalities
+- Correlations between symptoms and lab/test results
 - Potential triggers or aggravating factors
+- Medical test findings and their relationship to symptoms
 - Lifestyle factors that might be relevant
 - Patterns that suggest when to seek medical attention
 
@@ -114,6 +107,41 @@ Notes: ${log.notes}
     }).join('\n');
   }
 
+  private formatLabWorkForAnalysis(labWork: LabWork[]): string {
+    return labWork.map(lab => {
+      const date = new Date(lab.date);
+      const testsInfo = lab.tests.map(test => 
+        `  ${test.name}: ${test.value}${test.unit ? ` ${test.unit}` : ''} (${test.status})${test.referenceRange ? ` [Normal: ${test.referenceRange}]` : ''}${test.notes ? ` - ${test.notes}` : ''}`
+      ).join('\n');
+      
+      return `Lab Work - ${lab.testType.toUpperCase()}
+Date: ${date.toLocaleDateString()}
+Lab: ${lab.labName}
+${lab.orderingPhysician ? `Physician: ${lab.orderingPhysician}` : ''}
+Tests:
+${testsInfo}
+${lab.overallNotes ? `Notes: ${lab.overallNotes}` : ''}
+---`;
+    }).join('\n');
+  }
+
+  private formatMedicalTestsForAnalysis(medicalTests: MedicalTest[]): string {
+    return medicalTests.map(test => {
+      const date = new Date(test.date);
+      
+      return `Medical Test - ${test.testType.toUpperCase()}
+Date: ${date.toLocaleDateString()}
+Test: ${test.testName}
+${test.facility ? `Facility: ${test.facility}` : ''}
+${test.orderingPhysician ? `Physician: ${test.orderingPhysician}` : ''}
+Results: ${test.results}
+${test.impression ? `Impression: ${test.impression}` : ''}
+${test.recommendations ? `Recommendations: ${test.recommendations}` : ''}
+${test.followUp ? `Follow-up: ${test.followUp}` : ''}
+---`;
+    }).join('\n');
+  }
+
   private parseTextResponse(content: string): HypothesisAnalysis {
     // Fallback parsing if JSON parsing fails
     const lines = content.split('\n').filter(line => line.trim());
@@ -123,6 +151,8 @@ Notes: ${log.notes}
     const recommendations: string[] = [];
     const riskFactors: string[] = [];
     const nextSteps: string[] = [];
+    const labInsights: string[] = [];
+    const testCorrelations: string[] = [];
     
     let currentSection = '';
     
@@ -133,6 +163,8 @@ Notes: ${log.notes}
       else if (lowerLine.includes('recommend')) currentSection = 'recommendations';
       else if (lowerLine.includes('risk')) currentSection = 'risk';
       else if (lowerLine.includes('next step') || lowerLine.includes('action')) currentSection = 'next';
+      else if (lowerLine.includes('lab') && lowerLine.includes('insight')) currentSection = 'labInsights';
+      else if (lowerLine.includes('correlation') || lowerLine.includes('test correlation')) currentSection = 'testCorrelations';
       else if (line.trim() && line.startsWith('-') || line.startsWith('•')) {
         const item = line.replace(/^[-•]\s*/, '').trim();
         if (item) {
@@ -142,6 +174,8 @@ Notes: ${log.notes}
             case 'recommendations': recommendations.push(item); break;
             case 'risk': riskFactors.push(item); break;
             case 'next': nextSteps.push(item); break;
+            case 'labInsights': labInsights.push(item); break;
+            case 'testCorrelations': testCorrelations.push(item); break;
           }
         }
       }
@@ -153,10 +187,11 @@ Notes: ${log.notes}
       recommendations: recommendations.length > 0 ? recommendations : ['Continue logging for better pattern recognition'],
       riskFactors: riskFactors.length > 0 ? riskFactors : ['Monitor for any concerning changes'],
       nextSteps: nextSteps.length > 0 ? nextSteps : ['Continue tracking symptoms and consult healthcare provider if concerned'],
+      labInsights: labInsights.length > 0 ? labInsights : undefined,
+      testCorrelations: testCorrelations.length > 0 ? testCorrelations : undefined,
       disclaimer: "This analysis is for informational purposes only and should not replace professional medical advice. Please consult with your healthcare provider about any concerns."
     };
   }
 }
 
-export const aiService = new AIService();
-export type { HypothesisAnalysis, HealthLog }; 
+export const aiService = new AIService(); 

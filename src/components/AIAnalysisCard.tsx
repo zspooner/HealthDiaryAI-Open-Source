@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Brain, TrendingUp, Search, ArrowRight, AlertTriangle } from 'lucide-react';
-import { type HypothesisAnalysis } from '@/services/ai';
+import { Brain, TrendingUp, Search, ArrowRight, AlertTriangle, TestTube, Stethoscope } from 'lucide-react';
+import type { HypothesisAnalysis } from '@/types/health';
 
 interface AIAnalysisCardProps {
   analysis: HypothesisAnalysis;
@@ -67,6 +67,42 @@ export function AIAnalysisCard({ analysis }: AIAnalysisCardProps) {
             ))}
           </ul>
         </div>
+
+        {/* Lab Insights */}
+        {analysis.labInsights && analysis.labInsights.length > 0 && (
+          <div>
+            <h4 className="font-semibold text-foreground mb-3 flex items-center gap-2">
+              <TestTube className="h-4 w-4 text-blue-500" />
+              Lab Work Insights
+            </h4>
+            <ul className="space-y-2">
+              {analysis.labInsights.map((insight, index) => (
+                <li key={index} className="text-foreground ml-4 flex items-start gap-2">
+                  <span className="text-blue-500 mt-1">•</span>
+                  <span>{insight}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {/* Test Correlations */}
+        {analysis.testCorrelations && analysis.testCorrelations.length > 0 && (
+          <div>
+            <h4 className="font-semibold text-foreground mb-3 flex items-center gap-2">
+              <Stethoscope className="h-4 w-4 text-purple-500" />
+              Test & Symptom Correlations
+            </h4>
+            <ul className="space-y-2">
+              {analysis.testCorrelations.map((correlation, index) => (
+                <li key={index} className="text-foreground ml-4 flex items-start gap-2">
+                  <span className="text-purple-500 mt-1">•</span>
+                  <span>{correlation}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         {/* Risk Factors */}
         {analysis.riskFactors.length > 0 && (
