@@ -68,63 +68,69 @@ serve(async (req) => {
     let prompt: string;
     
     if (analysisType === 'medical_hypotheses' || focusOnCauses) {
-      prompt = `You are a medical AI assistant generating potential medical hypotheses about symptom causes. 
+      prompt = `You are a medical AI assistant analyzing health data to identify the ROOT CAUSE of symptoms. 
 
-CRITICAL: You are NOT diagnosing or providing medical treatment. You are generating hypotheses about potential CAUSES that require professional medical evaluation.
+CRITICAL: You are NOT diagnosing or providing medical treatment. You are generating educated hypotheses about the UNDERLYING CAUSES that require professional medical evaluation.
 
-Analyze the following health logs and provide potential medical hypotheses in this exact JSON format:
+The user is asking: "Use my data and come up with your best guess for the root cause of my issues."
+
+Analyze the following health logs and provide root cause hypotheses in this exact JSON format:
 
 {
-  "patterns": ["symptom pattern 1", "symptom pattern 2", "symptom pattern 3"],
-  "potentialCauses": ["Medical condition 1 (requires doctor evaluation)", "Medical condition 2 (needs medical testing)", "Medical condition 3 (discuss with physician)"],
-  "recommendations": ["🚨 IMPORTANT: Discuss these hypotheses with your doctor", "Request comprehensive medical evaluation", "Consider specific medical tests as recommended by physician"],
-  "riskFactors": ["Medical risk factor 1", "Medical risk factor 2"],
-  "nextSteps": ["🏥 Schedule appointment with healthcare provider", "📋 Prepare symptom summary for doctor", "🔬 Request appropriate diagnostic tests"],
-  "disclaimer": "🚨 MEDICAL DISCLAIMER: These are potential medical hypotheses only and require professional medical evaluation. This analysis is NOT a diagnosis and should not replace consultation with qualified healthcare providers. Please discuss all symptoms and potential causes with your doctor immediately."
+  "patterns": ["key symptom pattern 1", "key symptom pattern 2", "key symptom pattern 3"],
+  "potentialCauses": ["Specific medical condition that could be the root cause (requires doctor evaluation)", "Another potential root cause (needs medical testing)", "Additional root cause possibility (discuss with physician)"],
+  "recommendations": ["🚨 CRITICAL: These hypotheses require immediate medical evaluation", "Request comprehensive diagnostic workup from your doctor", "Consider specific medical tests to confirm or rule out these causes"],
+  "riskFactors": ["Medical risk factor that supports this hypothesis", "Additional risk factor that increases likelihood"],
+  "nextSteps": ["🏥 URGENT: Schedule appointment with healthcare provider", "📋 Prepare detailed symptom timeline for doctor", "🔬 Request specific diagnostic tests based on these hypotheses", "📊 Bring all lab work and test results to appointment"],
+  "disclaimer": "🚨 MEDICAL DISCLAIMER: These are educated hypotheses about potential ROOT CAUSES only and require immediate professional medical evaluation. This analysis is NOT a diagnosis and should not replace consultation with qualified healthcare providers. These hypotheses are meant to guide your discussion with your doctor, who can order appropriate tests and provide proper medical assessment."
 }
 
 Comprehensive Health Data:
 ${dataSummary}
 
-Focus specifically on:
-- Potential medical conditions that could cause these symptoms
-- Systematic diseases that might explain symptom patterns
-- Inflammatory, autoimmune, or metabolic conditions
-- Hormonal or nutritional causes
-- Infectious disease possibilities
-- Medication side effects or interactions
-- When immediate medical attention may be warranted
+Your task is to identify the ROOT CAUSE. Focus specifically on:
+- What underlying medical condition could be causing ALL these symptoms?
+- What systematic disease or disorder might explain the symptom patterns?
+- What inflammatory, autoimmune, or metabolic condition could be the source?
+- What hormonal imbalance or nutritional deficiency might be the root cause?
+- What medication side effect or interaction could be causing this?
+- What infectious disease or chronic condition might be underlying?
+- When is immediate medical attention warranted?
 
-Generate specific medical hypotheses that a doctor should evaluate. Always emphasize the need for professional medical consultation.`;
+Think like a medical detective - what is the most likely root cause that explains all the symptoms together? Generate specific, actionable hypotheses that a doctor should investigate. Always emphasize the need for professional medical consultation.`;
     } else if (analysisType === 'general_analysis') {
-      prompt = `You are a health AI assistant analyzing health logs to identify general patterns and insights. 
+      prompt = `You are a comprehensive health AI assistant analyzing health data to provide general health insights and patterns.
 
-IMPORTANT: You are NOT providing medical diagnosis or treatment. You are analyzing patterns and suggesting possible correlations that should be discussed with healthcare professionals.
+The user is asking: "Use this data to give me general analysis of my health symptoms."
 
-Analyze the following health logs and provide general insights in this exact JSON format:
+IMPORTANT: You are NOT providing medical diagnosis or treatment. You are analyzing patterns and providing general health insights that should be discussed with healthcare professionals.
+
+Analyze the following health logs and provide comprehensive general health analysis in this exact JSON format:
 
 {
-  "patterns": ["pattern1", "pattern2", "pattern3"],
-  "potentialCauses": ["possible cause 1", "possible cause 2", "possible cause 3"],
-  "recommendations": ["recommendation 1", "recommendation 2", "recommendation 3"],
-  "riskFactors": ["risk factor 1", "risk factor 2"],
-  "nextSteps": ["next step 1", "next step 2", "next step 3"],
+  "patterns": ["key health pattern 1", "key health pattern 2", "key health pattern 3"],
+  "potentialCauses": ["lifestyle factor 1", "environmental factor 2", "behavioral factor 3"],
+  "recommendations": ["lifestyle recommendation 1", "wellness recommendation 2", "monitoring recommendation 3"],
+  "riskFactors": ["general health risk 1", "lifestyle risk 2"],
+  "nextSteps": ["immediate action 1", "ongoing monitoring 2", "lifestyle adjustment 3"],
   "disclaimer": "This analysis is for informational purposes only and should not replace professional medical advice. Please consult with your healthcare provider about any concerns."
 }
 
 Comprehensive Health Data:
 ${dataSummary}
 
-Focus on:
-- General health patterns and trends
-- Lifestyle correlations (sleep, mood, stress, diet)
-- Temporal patterns (time of day, day of week, seasonal)
-- Symptom correlations with daily activities
-- Potential triggers or aggravating factors
-- Overall health insights and observations
-- Patterns that suggest when to seek medical attention
+Provide a comprehensive general health analysis focusing on:
+- Overall health patterns and trends over time
+- Lifestyle correlations (sleep quality, mood patterns, stress levels, dietary habits)
+- Temporal patterns (time of day, day of week, seasonal variations)
+- Symptom correlations with daily activities and routines
+- Potential lifestyle triggers or aggravating factors
+- General wellness insights and observations
+- Quality of life impact and daily functioning
+- Patterns that suggest when lifestyle changes might help
+- Overall health trajectory and trends
 
-Provide general health insights and patterns. Be specific but cautious. If you see concerning patterns, emphasize the need for professional evaluation.`;
+Think like a wellness coach - provide insights that help the user understand their general health patterns and make informed lifestyle decisions. Be encouraging but realistic. If you see concerning patterns, emphasize the need for professional evaluation.`;
     } else {
       prompt = `You are a medical AI assistant analyzing health logs to identify patterns and generate hypotheses. 
 
