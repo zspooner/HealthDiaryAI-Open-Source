@@ -88,17 +88,14 @@ export function LabWorkForm({ onLabWorkAdded, onMedicalTestAdded }: LabWorkFormP
     console.log('Lab work submit attempted:', { 
       labName: labName.trim(), 
       testsLength: tests.length,
-      canSubmit: labName.trim() && tests.length > 0 
+      canSubmit: tests.length > 0 
     });
     
-    if (!labName.trim() || tests.length === 0) {
-      console.log('Form validation failed:', { 
-        hasLabName: !!labName.trim(), 
-        hasTests: tests.length > 0 
-      });
+    if (tests.length === 0) {
+      console.log('Form validation failed - no tests added');
       toast({
         title: "Incomplete form",
-        description: "Please provide lab name and at least one test result.",
+        description: "Please add at least one test result.",
         variant: "destructive",
       });
       return;
@@ -108,7 +105,7 @@ export function LabWorkForm({ onLabWorkAdded, onMedicalTestAdded }: LabWorkFormP
       id: Date.now().toString(),
       date: new Date().toISOString(),
       testType: labTestType,
-      labName: labName.trim(),
+      labName: labName.trim() || 'Unknown Lab',
       orderingPhysician: orderingPhysician.trim() || undefined,
       tests,
       overallNotes: overallNotes.trim() || undefined,
@@ -261,12 +258,11 @@ export function LabWorkForm({ onLabWorkAdded, onMedicalTestAdded }: LabWorkFormP
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-base font-medium">Lab/Facility Name</Label>
+                  <Label className="text-base font-medium">Lab/Facility Name (Optional)</Label>
                   <Input
-                    placeholder="e.g., Quest Diagnostics, LabCorp"
+                    placeholder="e.g., Quest Diagnostics, LabCorp (optional)"
                     value={labName}
                     onChange={(e) => setLabName(e.target.value)}
-                    required
                   />
                 </div>
               </div>
@@ -428,7 +424,7 @@ export function LabWorkForm({ onLabWorkAdded, onMedicalTestAdded }: LabWorkFormP
               <Button 
                 type="submit" 
                 className="w-full bg-gradient-primary shadow-medical"
-                disabled={!labName.trim() || tests.length === 0}
+                disabled={tests.length === 0}
               >
                 Save Lab Work
               </Button>
