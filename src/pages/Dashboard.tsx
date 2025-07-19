@@ -5,13 +5,16 @@ import { useHealthData } from '@/hooks/useHealthData';
 import { LogDashboard } from '@/components/LogDashboard';
 import { LogForm } from '@/components/LogForm';
 import { AIAnalysisCard } from '@/components/AIAnalysisCard';
+import { RedditResultsCard } from '@/components/RedditResultsCard';
 import { aiService } from '@/services/ai';
+import { redditSearchService } from '@/services/redditSearch';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Brain, Loader2, LogOut, User, ArrowLeft, TrendingUp, Search, TestTube } from 'lucide-react';
+import { Brain, Loader2, LogOut, User, ArrowLeft, TrendingUp, TestTube } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Link } from 'react-router-dom';
 import type { HypothesisAnalysis } from '@/services/ai';
+import type { RedditSearchResult } from '@/services/redditSearch';
 
 const Dashboard = () => {
   const { user, signOut } = useAuth();
@@ -19,6 +22,7 @@ const Dashboard = () => {
   const { toast } = useToast();
   
   const [analysis, setAnalysis] = useState<HypothesisAnalysis | null>(null);
+  const [redditResults, setRedditResults] = useState<RedditSearchResult | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   const handleSignOut = async () => {
@@ -45,12 +49,18 @@ const Dashboard = () => {
     setIsAnalyzing(true);
     
     try {
-      const aiAnalysis = await aiService.generateHypothesis(healthLogs);
+      // Run AI analysis and Reddit search in parallel
+      const [aiAnalysis, redditSearchResults] = await Promise.all([
+        aiService.generateHypothesis(healthLogs),
+        redditSearchService.searchSimilarCases(healthLogs)
+      ]);
+      
       setAnalysis(aiAnalysis);
+      setRedditResults(redditSearchResults);
       
       toast({
         title: "Analysis Complete",
-        description: "AI has analyzed your health data and generated insights.",
+        description: `AI analysis complete with ${redditSearchResults.posts.length} similar Reddit cases found.`,
       });
     } catch (error) {
       console.error('AI Analysis failed:', error);
@@ -196,40 +206,8 @@ const Dashboard = () => {
           {/* AI Analysis Results */}
           {analysis && <AIAnalysisCard analysis={analysis} />}
 
-          {/* Coming Soon Features */}
-          {healthLogs.length > 0 && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-              <Card className="shadow-card opacity-75">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-sm">
-                    <Search className="h-4 w-4" />
-                    Reddit Case Search
-                    <span className="text-xs bg-accent text-accent-foreground px-2 py-1 rounded">Coming Soon</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground">
-                    Find similar health cases and experiences from Reddit communities
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card className="shadow-card opacity-75">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-sm">
-                    <TrendingUp className="h-4 w-4" />
-                    Visual Charts
-                    <span className="text-xs bg-accent text-accent-foreground px-2 py-1 rounded">Coming Soon</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground">
-                    Interactive charts showing symptom trends over time
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
-          )}
+          {/* Reddit Search Results */}
+          {redditResults && <RedditResultsCard results={redditResults} />}
 
           {/* Health Log Input Form */}
           <div className="mb-8">
@@ -244,9 +222,9 @@ const Dashboard = () => {
             <Card className="mt-8 shadow-medical">
               <CardContent className="p-8 text-center">
                 <Brain className="h-12 w-12 text-primary mx-auto mb-4 animate-pulse" />
-                <h3 className="text-lg font-semibold mb-2">Generating AI Hypotheses</h3>
+                <h3 className="text-lg font-semibold mb-2">Generating AI Analysis & Searching Reddit</h3>
                 <p className="text-muted-foreground">
-                  AI is analyzing your {healthLogs.length} health logs to generate hypotheses and identify patterns...
+                  AI is analyzing your {healthLogs.length} health logs and searching for similar cases on Reddit...
                 </p>
               </CardContent>
             </Card>
