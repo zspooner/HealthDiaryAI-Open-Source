@@ -52,19 +52,26 @@ const Dashboard = () => {
     setIsAnalyzing(true);
     
     try {
-      // Run AI analysis and Reddit search in parallel
-      const [aiAnalysis, redditSearchResults] = await Promise.all([
-        aiService.generateHypothesis(healthLogs),
-        redditSearchService.searchSimilarCases(healthLogs)
-      ]);
-      
+      // Run AI analysis first
+      const aiAnalysis = await aiService.generateHypothesis(healthLogs);
       setAnalysis(aiAnalysis);
-      setRedditResults(redditSearchResults);
       
-      toast({
-        title: "Analysis Complete",
-        description: `AI analysis complete with ${redditSearchResults.posts.length} similar Reddit cases found.`,
-      });
+      // Try Reddit search separately, don't let it fail the main analysis
+      try {
+        const redditSearchResults = await redditSearchService.searchSimilarCases(healthLogs);
+        setRedditResults(redditSearchResults);
+        toast({
+          title: "Analysis Complete",
+          description: `AI analysis complete with ${redditSearchResults.posts.length} similar Reddit cases found.`,
+        });
+      } catch (redditError) {
+        console.warn('Reddit search failed, but AI analysis succeeded:', redditError);
+        setRedditResults(null);
+        toast({
+          title: "Analysis Complete",
+          description: "AI analysis complete. Reddit search temporarily unavailable.",
+        });
+      }
     } catch (error) {
       console.error('AI Analysis failed:', error);
       toast({
@@ -90,19 +97,26 @@ const Dashboard = () => {
     setIsGeneratingHypotheses(true);
     
     try {
-      // Run medical hypotheses and Reddit search in parallel
-      const [medicalAnalysis, redditSearchResults] = await Promise.all([
-        aiService.generateMedicalHypotheses(healthLogs),
-        redditSearchService.searchSimilarCases(healthLogs)
-      ]);
-      
+      // Run medical hypotheses first
+      const medicalAnalysis = await aiService.generateMedicalHypotheses(healthLogs);
       setMedicalHypotheses(medicalAnalysis);
-      setHypothesesRedditResults(redditSearchResults);
       
-      toast({
-        title: "Medical Hypotheses Generated",
-        description: `Medical hypotheses complete with ${redditSearchResults.posts.length} similar Reddit cases found. Remember to discuss these with your doctor.`,
-      });
+      // Try Reddit search separately, don't let it fail the main analysis
+      try {
+        const redditSearchResults = await redditSearchService.searchSimilarCases(healthLogs);
+        setHypothesesRedditResults(redditSearchResults);
+        toast({
+          title: "Medical Hypotheses Generated",
+          description: `Medical hypotheses complete with ${redditSearchResults.posts.length} similar Reddit cases found. Remember to discuss these with your doctor.`,
+        });
+      } catch (redditError) {
+        console.warn('Reddit search failed, but medical hypotheses succeeded:', redditError);
+        setHypothesesRedditResults(null);
+        toast({
+          title: "Medical Hypotheses Generated",
+          description: "Medical hypotheses complete. Reddit search temporarily unavailable. Remember to discuss these with your doctor.",
+        });
+      }
     } catch (error) {
       console.error('Medical Hypotheses failed:', error);
       toast({
