@@ -19,33 +19,50 @@ interface RedditSearchResult {
 class RedditSearchService {
   private async searchRedditAPI(query: string, subreddit?: string): Promise<RedditPost[]> {
     try {
-      const subredditParam = subreddit ? `/r/${subreddit}` : '';
-      const url = `https://www.reddit.com${subredditParam}/search.json?q=${encodeURIComponent(query)}&sort=relevance&t=year&limit=10`;
+      // Use Supabase Edge Function as proxy to avoid CORS issues
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
       
-      const response = await fetch(url, {
+      const response = await fetch('https://opiuyyiqkmmiffaagqnk.supabase.co/functions/v1/ai-analysis', {
+        method: 'POST',
         headers: {
-          'User-Agent': 'Medical-Tracker-App/1.0'
-        }
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          redditSearch: {
+            query,
+            subreddit: subreddit || null
+          }
+        }),
+        signal: controller.signal
       });
 
+      clearTimeout(timeoutId);
+
       if (!response.ok) {
-        throw new Error(`Reddit API error: ${response.status}`);
+        console.warn('Reddit search proxy failed, returning empty results');
+        return [];
       }
 
       const data = await response.json();
       
-      return data.data.children.map((child: any) => ({
-        title: child.data.title,
-        selftext: child.data.selftext,
-        url: `https://reddit.com${child.data.permalink}`,
-        score: child.data.score,
-        num_comments: child.data.num_comments,
-        created_utc: child.data.created_utc,
-        subreddit: child.data.subreddit,
-        author: child.data.author
-      }));
+      // If the response contains Reddit posts, return them
+      if (data.redditPosts && Array.isArray(data.redditPosts)) {
+        return data.redditPosts.map((post: any) => ({
+          title: post.title,
+          selftext: post.selftext,
+          url: post.url,
+          score: post.score,
+          num_comments: post.num_comments,
+          created_utc: post.created_utc,
+          subreddit: post.subreddit,
+          author: post.author
+        }));
+      }
+      
+      return [];
     } catch (error) {
-      console.error('Error searching Reddit:', error);
+      console.error('Error searching Reddit via proxy:', error);
       return [];
     }
   }
@@ -69,6 +86,11 @@ class RedditSearchService {
       .map(([symptom]) => symptom);
 
     const searchTerms = topSymptoms;
+    
+    // If no symptoms found, return empty result
+    if (searchTerms.length === 0) {
+      return { posts: [], searchTerms: [] };
+    }
     
     // Health-related subreddits to search - different focus based on search type
     const healthSubreddits = searchType === 'medical' ? [

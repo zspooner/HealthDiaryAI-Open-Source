@@ -36,7 +36,19 @@ serve(async (req) => {
 
   try {
     console.log('AI Analysis Edge Function called');
-    const { logs, labWork = [], medicalTests = [], analysisType, focusOnCauses } = await req.json();
+    const requestData = await req.json();
+    
+    // Check if this is a Reddit search request
+    if (requestData.redditSearch) {
+      console.log('Reddit search request received:', requestData.redditSearch);
+      const redditPosts = await searchReddit(requestData.redditSearch.query, requestData.redditSearch.subreddit);
+      return new Response(JSON.stringify({ redditPosts }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    
+    // Regular AI analysis request
+    const { logs, labWork = [], medicalTests = [], analysisType, focusOnCauses } = requestData;
     
     if (!logs || !Array.isArray(logs)) {
       throw new Error('Invalid logs data provided');
@@ -580,4 +592,40 @@ function parseTextResponse(content: string, analysisType?: string): HypothesisAn
     nextSteps: nextSteps.length > 0 ? nextSteps : ['Continue tracking symptoms and consult healthcare provider if concerned'],
     disclaimer: "This analysis is for informational purposes only and should not replace professional medical advice. Please consult with your healthcare provider about any concerns."
   };
+}
+
+async function searchReddit(query: string, subreddit?: string): Promise<any[]> {
+  try {
+    console.log('Searching Reddit for:', query, 'in subreddit:', subreddit);
+    
+    const subredditParam = subreddit ? `/r/${subreddit}` : '';
+    const url = `https://www.reddit.com${subredditParam}/search.json?q=${encodeURIComponent(query)}&sort=relevance&t=year&limit=10`;
+    
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'Medical-Tracker-App/1.0 (Health Detective AI)'
+      }
+    });
+
+    if (!response.ok) {
+      console.error('Reddit API error:', response.status);
+      return [];
+    }
+
+    const data = await response.json();
+    
+    return data.data.children.map((child: any) => ({
+      title: child.data.title,
+      selftext: child.data.selftext,
+      url: `https://reddit.com${child.data.permalink}`,
+      score: child.data.score,
+      num_comments: child.data.num_comments,
+      created_utc: child.data.created_utc,
+      subreddit: child.data.subreddit,
+      author: child.data.author
+    }));
+  } catch (error) {
+    console.error('Error searching Reddit:', error);
+    return [];
+  }
 }
