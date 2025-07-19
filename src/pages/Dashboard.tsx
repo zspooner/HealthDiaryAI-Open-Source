@@ -3,6 +3,7 @@ import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
 import { useHealthData } from '@/hooks/useHealthData';
 import { LogDashboard } from '@/components/LogDashboard';
+import { LogForm } from '@/components/LogForm';
 import { AIAnalysisCard } from '@/components/AIAnalysisCard';
 import { aiService } from '@/services/ai';
 import { Button } from '@/components/ui/button';
@@ -229,6 +230,11 @@ const Dashboard = () => {
               </Card>
             </div>
           )}
+
+          {/* Health Log Input Form */}
+          <div className="mb-8">
+            <LogForm onLogAdded={() => {}} />
+          </div>
 
           {/* Health Logs */}
           <LogDashboard logs={healthLogs} />
