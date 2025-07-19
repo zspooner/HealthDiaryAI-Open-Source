@@ -2,20 +2,22 @@ import React, { useState } from 'react';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
 import { useHealthData } from '@/hooks/useHealthData';
-import type { LabWork, MedicalTest } from '@/types/health';
 import { LogDashboard } from '@/components/LogDashboard';
 import { LogForm } from '@/components/LogForm';
+import { LabWorkForm } from '@/components/LabWorkForm';
+import { LabWorkDashboard } from '@/components/LabWorkDashboard';
 import { AIAnalysisCard } from '@/components/AIAnalysisCard';
 import { RedditResultsCard } from '@/components/RedditResultsCard';
 import { aiService } from '@/services/ai';
 import { redditSearchService } from '@/services/redditSearch';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Brain, Loader2, LogOut, User, ArrowLeft, TrendingUp, TestTube } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Brain, Loader2, LogOut, User, TrendingUp, TestTube, Activity } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { Link } from 'react-router-dom';
 import type { HypothesisAnalysis } from '@/services/ai';
 import type { RedditSearchResult } from '@/services/redditSearch';
+import type { LabWork, MedicalTest } from '@/types/health';
 
 const Dashboard = () => {
   const { user, signOut } = useAuth();
@@ -187,30 +189,16 @@ const Dashboard = () => {
         <div className="bg-gradient-primary text-primary-foreground">
           <div className="container mx-auto px-4 py-8">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <Link to="/">
-                  <Button variant="outline" size="sm" className="bg-white/20 text-white border-white/30 hover:bg-white/30">
-                    <ArrowLeft className="h-4 w-4 mr-2" />
-                    Home
-                  </Button>
-                </Link>
-                <div>
-                  <h1 className="text-3xl font-bold mb-2 flex items-center gap-2">
-                    <TrendingUp className="h-8 w-8" />
-                    Health Dashboard
-                  </h1>
-                  <p className="text-primary-foreground/80">
-                    Welcome back, {user?.email}
-                  </p>
-                </div>
+              <div>
+                <h1 className="text-3xl font-bold mb-2 flex items-center gap-2">
+                  <TrendingUp className="h-8 w-8" />
+                  Health Dashboard
+                </h1>
+                <p className="text-primary-foreground/80">
+                  Welcome back, {user?.email}
+                </p>
               </div>
               <div className="flex items-center gap-4">
-                <Link to="/lab-work">
-                  <Button variant="outline" size="sm" className="bg-white/20 text-white border-white/30 hover:bg-white/30">
-                    <TestTube className="h-4 w-4 mr-2" />
-                    Lab Work
-                  </Button>
-                </Link>
                 <div className="flex items-center gap-2 bg-white/20 rounded-lg px-3 py-2">
                   <User className="h-4 w-4" />
                   <span className="text-sm">{user?.email}</span>
@@ -364,13 +352,31 @@ const Dashboard = () => {
             </div>
           )}
 
-          {/* Health Log Input Form */}
+          {/* Data Input Tabs */}
           <div className="mb-8">
-            <LogForm onLogAdded={() => {}} />
+            <Tabs defaultValue="health-logs" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="health-logs" className="flex items-center gap-2">
+                  <Activity className="h-4 w-4" />
+                  Daily Health Log
+                </TabsTrigger>
+                <TabsTrigger value="lab-work" className="flex items-center gap-2">
+                  <TestTube className="h-4 w-4" />
+                  Lab Work
+                </TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="health-logs" className="space-y-6">
+                <LogForm onLogAdded={() => {}} />
+                <LogDashboard logs={healthLogs} />
+              </TabsContent>
+              
+              <TabsContent value="lab-work" className="space-y-6">
+                <LabWorkForm onLabWorkAdded={() => {}} onMedicalTestAdded={() => {}} />
+                <LabWorkDashboard labWork={labWork} medicalTests={medicalTests} />
+              </TabsContent>
+            </Tabs>
           </div>
-
-          {/* Health Logs */}
-          <LogDashboard logs={healthLogs} />
 
           {/* Loading Analysis */}
           {isAnalyzing && (

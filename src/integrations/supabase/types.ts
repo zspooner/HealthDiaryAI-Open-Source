@@ -83,6 +83,140 @@ export type Database = {
         }
         Relationships: []
       }
+      lab_tests: {
+        Row: {
+          created_at: string
+          id: string
+          lab_work_id: string
+          name: string
+          notes: string | null
+          reference_range: string | null
+          status: string | null
+          unit: string | null
+          value: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          lab_work_id: string
+          name: string
+          notes?: string | null
+          reference_range?: string | null
+          status?: string | null
+          unit?: string | null
+          value: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          lab_work_id?: string
+          name?: string
+          notes?: string | null
+          reference_range?: string | null
+          status?: string | null
+          unit?: string | null
+          value?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lab_tests_lab_work_id_fkey"
+            columns: ["lab_work_id"]
+            isOneToOne: false
+            referencedRelation: "lab_work"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lab_work: {
+        Row: {
+          created_at: string
+          date: string
+          id: string
+          lab_name: string
+          ordering_physician: string | null
+          overall_notes: string | null
+          report_url: string | null
+          test_type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          id?: string
+          lab_name: string
+          ordering_physician?: string | null
+          overall_notes?: string | null
+          report_url?: string | null
+          test_type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          id?: string
+          lab_name?: string
+          ordering_physician?: string | null
+          overall_notes?: string | null
+          report_url?: string | null
+          test_type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      medical_tests: {
+        Row: {
+          created_at: string
+          date: string
+          facility: string | null
+          follow_up: string | null
+          id: string
+          impression: string | null
+          ordering_physician: string | null
+          recommendations: string | null
+          report_url: string | null
+          results: string
+          test_name: string
+          test_type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          facility?: string | null
+          follow_up?: string | null
+          id?: string
+          impression?: string | null
+          ordering_physician?: string | null
+          recommendations?: string | null
+          report_url?: string | null
+          results: string
+          test_name: string
+          test_type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          facility?: string | null
+          follow_up?: string | null
+          id?: string
+          impression?: string | null
+          ordering_physician?: string | null
+          recommendations?: string | null
+          report_url?: string | null
+          results?: string
+          test_name?: string
+          test_type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
