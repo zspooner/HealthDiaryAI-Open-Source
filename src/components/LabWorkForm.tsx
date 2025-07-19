@@ -85,7 +85,17 @@ export function LabWorkForm({ onLabWorkAdded, onMedicalTestAdded }: LabWorkFormP
   const handleLabWorkSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
+    console.log('Lab work submit attempted:', { 
+      labName: labName.trim(), 
+      testsLength: tests.length,
+      canSubmit: labName.trim() && tests.length > 0 
+    });
+    
     if (!labName.trim() || tests.length === 0) {
+      console.log('Form validation failed:', { 
+        hasLabName: !!labName.trim(), 
+        hasTests: tests.length > 0 
+      });
       toast({
         title: "Incomplete form",
         description: "Please provide lab name and at least one test result.",
@@ -128,7 +138,17 @@ export function LabWorkForm({ onLabWorkAdded, onMedicalTestAdded }: LabWorkFormP
   const handleMedicalTestSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
+    console.log('Medical test submit attempted:', { 
+      testName: medicalTestName.trim(), 
+      results: results.trim(),
+      canSubmit: medicalTestName.trim() && results.trim() 
+    });
+    
     if (!medicalTestName.trim() || !results.trim()) {
+      console.log('Medical test validation failed:', { 
+        hasTestName: !!medicalTestName.trim(), 
+        hasResults: !!results.trim() 
+      });
       toast({
         title: "Incomplete form",
         description: "Please provide test name and results.",
