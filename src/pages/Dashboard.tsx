@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { LogDashboard } from '@/components/LogDashboard';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, Brain, Search, TrendingUp } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
+import { aiService, type HypothesisAnalysis } from '@/services/ai';
+import { AIAnalysisCard } from '@/components/AIAnalysisCard';
 
 interface HealthLog {
   id: string;
@@ -20,7 +22,7 @@ interface HealthLog {
 const Dashboard = () => {
   const [logs, setLogs] = useState<HealthLog[]>([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [analysis, setAnalysis] = useState<string | null>(null);
+  const [analysis, setAnalysis] = useState<HypothesisAnalysis | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -43,68 +45,27 @@ const Dashboard = () => {
 
     setIsAnalyzing(true);
     
-    // Simulate AI analysis (in real app, this would call OpenAI API)
-    setTimeout(() => {
-      const mockAnalysis = `Based on your ${logs.length} health logs, I've identified several patterns:
-
-**Symptom Patterns:**
-• Your symptoms appear to be most severe on ${getMostSevereDay()}
-• Common symptom clusters include: ${getCommonSymptoms()}
-• Sleep quality correlates with next-day symptom severity
-
-**Recommendations:**
-• Consider tracking triggers around high-severity days
-• Your sleep-symptom correlation suggests prioritizing sleep hygiene
-• Pattern suggests potential correlation with ${logs.length > 5 ? 'weekly stress cycles' : 'recent lifestyle changes'}
-
-**Next Steps:**
-• Continue logging for more comprehensive pattern detection
-• Consider sharing this data with your healthcare provider
-• Look into stress management techniques
-
-*Note: This analysis is for informational purposes only and should not replace professional medical advice.*`;
-
-      setAnalysis(mockAnalysis);
-      setIsAnalyzing(false);
+    try {
+      const aiAnalysis = await aiService.generateHypothesis(logs);
+      setAnalysis(aiAnalysis);
       
       toast({
         title: "Analysis complete",
-        description: "AI has analyzed your health patterns.",
+        description: "AI has analyzed your health patterns and generated hypotheses.",
       });
-    }, 3000);
+    } catch (error) {
+      console.error('AI Analysis failed:', error);
+      toast({
+        title: "Analysis failed",
+        description: "Failed to generate AI analysis. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsAnalyzing(false);
+    }
   };
 
-  const getMostSevereDay = () => {
-    if (logs.length === 0) return 'weekdays';
-    const dayGroups = logs.reduce((acc, log) => {
-      const day = new Date(log.date).toLocaleDateString('en-US', { weekday: 'long' });
-      if (!acc[day]) acc[day] = [];
-      acc[day].push(log.severity);
-      return acc;
-    }, {} as Record<string, number[]>);
-    
-    const avgSeverityByDay = Object.entries(dayGroups).map(([day, severities]) => ({
-      day,
-      avg: severities.reduce((sum, s) => sum + s, 0) / severities.length
-    }));
-    
-    return avgSeverityByDay.sort((a, b) => b.avg - a.avg)[0]?.day || 'weekdays';
-  };
 
-  const getCommonSymptoms = () => {
-    const symptomCounts = logs.reduce((acc, log) => {
-      log.symptoms.forEach(symptom => {
-        acc[symptom] = (acc[symptom] || 0) + 1;
-      });
-      return acc;
-    }, {} as Record<string, number>);
-    
-    return Object.entries(symptomCounts)
-      .sort(([,a], [,b]) => b - a)
-      .slice(0, 3)
-      .map(([symptom]) => symptom)
-      .join(', ') || 'various symptoms';
-  };
 
   return (
     <div className="min-h-screen bg-gradient-subtle">
@@ -131,54 +92,7 @@ const Dashboard = () => {
         </div>
 
         {/* AI Analysis Results */}
-        {analysis && (
-          <Card className="mb-8 shadow-insight">
-            <CardHeader className="bg-gradient-accent">
-              <CardTitle className="flex items-center gap-2 text-accent-foreground">
-                <Brain className="h-5 w-5" />
-                AI Pattern Analysis
-              </CardTitle>
-              <CardDescription className="text-accent-foreground/80">
-                Generated insights from your health logs
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="p-6">
-              <div className="prose prose-sm max-w-none">
-                {analysis.split('\n').map((line, index) => {
-                  if (line.startsWith('**') && line.endsWith('**')) {
-                    return (
-                      <h4 key={index} className="font-semibold text-foreground mt-4 mb-2">
-                        {line.replace(/\*\*/g, '')}
-                      </h4>
-                    );
-                  }
-                  if (line.startsWith('•')) {
-                    return (
-                      <li key={index} className="text-foreground ml-4">
-                        {line.substring(1).trim()}
-                      </li>
-                    );
-                  }
-                  if (line.startsWith('*Note:')) {
-                    return (
-                      <p key={index} className="text-sm text-muted-foreground italic mt-4">
-                        {line.substring(1)}
-                      </p>
-                    );
-                  }
-                  if (line.trim()) {
-                    return (
-                      <p key={index} className="text-foreground">
-                        {line}
-                      </p>
-                    );
-                  }
-                  return <br key={index} />;
-                })}
-              </div>
-            </CardContent>
-          </Card>
-        )}
+        {analysis && <AIAnalysisCard analysis={analysis} />}
 
         {/* Coming Soon Features */}
         {logs.length > 0 && (
@@ -226,9 +140,9 @@ const Dashboard = () => {
           <Card className="mt-8 shadow-medical">
             <CardContent className="p-8 text-center">
               <Brain className="h-12 w-12 text-primary mx-auto mb-4 animate-pulse" />
-              <h3 className="text-lg font-semibold mb-2">Analyzing Your Health Patterns</h3>
+              <h3 className="text-lg font-semibold mb-2">Generating AI Hypotheses</h3>
               <p className="text-muted-foreground">
-                AI is processing your {logs.length} health logs to identify patterns and insights...
+                AI is analyzing your {logs.length} health logs to generate hypotheses and identify patterns...
               </p>
             </CardContent>
           </Card>

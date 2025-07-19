@@ -164,9 +164,9 @@ export function LogDashboard({ logs, onAnalyze }: LogDashboardProps) {
               <div className="flex items-center gap-3">
                 <Brain className="h-6 w-6 text-accent-foreground" />
                 <div>
-                  <h3 className="font-semibold text-accent-foreground">AI Pattern Analysis</h3>
+                  <h3 className="font-semibold text-accent-foreground">AI Hypothesis Generation</h3>
                   <p className="text-sm text-accent-foreground/80">
-                    Discover hidden patterns in your {logs.length} health logs
+                    Generate AI-powered hypotheses from your {logs.length} health logs
                   </p>
                 </div>
               </div>
@@ -175,7 +175,7 @@ export function LogDashboard({ logs, onAnalyze }: LogDashboardProps) {
                 variant="secondary"
                 className="bg-white/20 text-accent-foreground border-white/30"
               >
-                Analyze Patterns
+                Generate Hypotheses
               </Button>
             </div>
           </CardContent>
