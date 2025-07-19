@@ -21,6 +21,8 @@ const Auth = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [emailVerificationSent, setEmailVerificationSent] = useState(false);
+  const [userEmailForVerification, setUserEmailForVerification] = useState('');
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -92,10 +94,17 @@ const Auth = () => {
         variant: "destructive",
       });
     } else {
+      setEmailVerificationSent(true);
+      setUserEmailForVerification(email);
       toast({
         title: "Account Created!",
-        description: "Please check your email to verify your account.",
+        description: "Please check your email to verify your account before signing in.",
       });
+      // Clear form fields after successful signup
+      setEmail('');
+      setPassword('');
+      setConfirmPassword('');
+      setDisplayName('');
     }
     
     setIsSubmitting(false);
@@ -119,11 +128,47 @@ const Auth = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="signin" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="signin">Sign In</TabsTrigger>
-              <TabsTrigger value="signup">Sign Up</TabsTrigger>
-            </TabsList>
+          {emailVerificationSent ? (
+            <div className="text-center space-y-4">
+              <div className="mx-auto w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-semibold text-foreground">Check Your Email</h3>
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground">
+                  We've sent a verification link to:
+                </p>
+                <p className="text-sm font-medium text-foreground bg-muted px-3 py-2 rounded">
+                  {userEmailForVerification}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Click the verification link in your email to activate your account, then return here to sign in.
+                </p>
+              </div>
+              <Alert>
+                <AlertDescription className="text-sm">
+                  <strong>Can't find the email?</strong> Check your spam folder or wait a few minutes for delivery.
+                </AlertDescription>
+              </Alert>
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setEmailVerificationSent(false);
+                  setUserEmailForVerification('');
+                }}
+                className="w-full"
+              >
+                Back to Sign In
+              </Button>
+            </div>
+          ) : (
+            <Tabs defaultValue="signin" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="signin">Sign In</TabsTrigger>
+                <TabsTrigger value="signup">Sign Up</TabsTrigger>
+              </TabsList>
             
             <TabsContent value="signin">
               <form onSubmit={handleSignIn} className="space-y-4">
@@ -242,8 +287,9 @@ const Auth = () => {
                   )}
                 </Button>
               </form>
-            </TabsContent>
-          </Tabs>
+              </TabsContent>
+            </Tabs>
+          )}
         </CardContent>
       </Card>
     </div>
