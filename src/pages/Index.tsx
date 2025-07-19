@@ -2,19 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { LogForm } from '@/components/LogForm';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Activity, Brain, TrendingUp, Users, ArrowRight } from 'lucide-react';
+import { Activity, Brain, TrendingUp, Users, ArrowRight, TestTube } from 'lucide-react';
 import { Link } from 'react-router-dom';
-
-interface HealthLog {
-  id: string;
-  date: string;
-  symptoms: string[];
-  medications: string[];
-  severity: number;
-  mood: string;
-  sleep: number;
-  notes: string;
-}
+import type { HealthLog } from '@/types/health';
 
 const Index = () => {
   const [totalLogs, setTotalLogs] = useState(0);
@@ -67,7 +57,7 @@ const Index = () => {
 
       <div className="container mx-auto px-4 py-12">
         {/* Features Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
           <Card className="shadow-card">
             <CardHeader className="text-center">
               <Activity className="h-8 w-8 text-primary mx-auto mb-2" />
@@ -76,6 +66,18 @@ const Index = () => {
             <CardContent>
               <CardDescription className="text-center">
                 Record symptoms, medications, mood, and sleep patterns with our comprehensive logging system
+              </CardDescription>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-card">
+            <CardHeader className="text-center">
+              <TestTube className="h-8 w-8 text-primary mx-auto mb-2" />
+              <CardTitle>Lab Work & Tests</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <CardDescription className="text-center">
+                Track lab results, medical tests, and diagnostic reports to complement your symptom data
               </CardDescription>
             </CardContent>
           </Card>
@@ -111,16 +113,23 @@ const Index = () => {
         </div>
 
         {/* Quick Access */}
-        {totalLogs > 0 && (
-          <div className="text-center">
+        <div className="flex justify-center gap-4 flex-wrap">
+          {totalLogs > 0 && (
             <Link to="/dashboard">
               <Button variant="outline" size="lg" className="shadow-medical">
                 <TrendingUp className="h-5 w-5 mr-2" />
                 View Your {totalLogs} Health {totalLogs === 1 ? 'Log' : 'Logs'}
               </Button>
             </Link>
-          </div>
-        )}
+          )}
+          
+          <Link to="/lab-work">
+            <Button variant="outline" size="lg" className="shadow-medical">
+              <TestTube className="h-5 w-5 mr-2" />
+              Add Lab Work & Tests
+            </Button>
+          </Link>
+        </div>
 
         {/* Coming Soon Section */}
         <div className="mt-16 text-center">

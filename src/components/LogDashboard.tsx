@@ -5,17 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Activity, Calendar, Clock, Heart, Pill, Search, TrendingUp, Brain } from 'lucide-react';
-
-interface HealthLog {
-  id: string;
-  date: string;
-  symptoms: string[];
-  medications: string[];
-  severity: number;
-  mood: string;
-  sleep: number;
-  notes: string;
-}
+import type { HealthLog } from '@/types/health';
 
 interface LogDashboardProps {
   logs: HealthLog[];

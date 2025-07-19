@@ -5,19 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, Brain, Search, TrendingUp } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
-import { aiService, type HypothesisAnalysis } from '@/services/ai';
+import { aiService } from '@/services/ai';
 import { AIAnalysisCard } from '@/components/AIAnalysisCard';
-
-interface HealthLog {
-  id: string;
-  date: string;
-  symptoms: string[];
-  medications: string[];
-  severity: number;
-  mood: string;
-  sleep: number;
-  notes: string;
-}
+import type { HealthLog, HypothesisAnalysis } from '@/types/health';
 
 const Dashboard = () => {
   const [logs, setLogs] = useState<HealthLog[]>([]);
@@ -34,10 +24,16 @@ const Dashboard = () => {
   }, []);
 
   const handleAnalyze = async () => {
-    if (logs.length < 3) {
+    // Get lab work and medical tests data
+    const savedLabWork = localStorage.getItem('labWork');
+    const savedMedicalTests = localStorage.getItem('medicalTests');
+    const labWork = savedLabWork ? JSON.parse(savedLabWork) : [];
+    const medicalTests = savedMedicalTests ? JSON.parse(savedMedicalTests) : [];
+
+    if (logs.length < 3 && labWork.length === 0 && medicalTests.length === 0) {
       toast({
         title: "Need more data",
-        description: "Please log at least 3 entries before requesting AI analysis.",
+        description: "Please log at least 3 health entries or add some lab work before requesting AI analysis.",
         variant: "destructive",
       });
       return;
@@ -46,12 +42,12 @@ const Dashboard = () => {
     setIsAnalyzing(true);
     
     try {
-      const aiAnalysis = await aiService.generateHypothesis(logs);
+      const aiAnalysis = await aiService.generateHypothesis(logs, labWork, medicalTests);
       setAnalysis(aiAnalysis);
       
       toast({
         title: "Analysis complete",
-        description: "AI has analyzed your health patterns and generated hypotheses.",
+        description: "AI has analyzed your health data including lab work and generated comprehensive insights.",
       });
     } catch (error) {
       console.error('AI Analysis failed:', error);
@@ -89,6 +85,13 @@ const Dashboard = () => {
               </p>
             </div>
           </div>
+          
+          <Link to="/lab-work">
+            <Button variant="outline" size="sm">
+              <Brain className="h-4 w-4 mr-2" />
+              Lab Work & Tests
+            </Button>
+          </Link>
         </div>
 
         {/* AI Analysis Results */}
