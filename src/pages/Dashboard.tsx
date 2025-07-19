@@ -1,39 +1,41 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { ProtectedRoute } from '@/components/ProtectedRoute';
+import { useAuth } from '@/contexts/AuthContext';
+import { useHealthData } from '@/hooks/useHealthData';
 import { LogDashboard } from '@/components/LogDashboard';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Brain, Search, TrendingUp } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import { useToast } from '@/hooks/use-toast';
-import { aiService } from '@/services/ai';
 import { AIAnalysisCard } from '@/components/AIAnalysisCard';
-import type { HealthLog, HypothesisAnalysis } from '@/types/health';
+import { aiService } from '@/services/ai';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Brain, Loader2, LogOut, User, ArrowLeft, TrendingUp, Search, TestTube } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { Link } from 'react-router-dom';
+import type { HypothesisAnalysis } from '@/services/ai';
 
 const Dashboard = () => {
-  const [logs, setLogs] = useState<HealthLog[]>([]);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [analysis, setAnalysis] = useState<HypothesisAnalysis | null>(null);
+  const { user, signOut } = useAuth();
+  const { healthLogs, loading } = useHealthData();
   const { toast } = useToast();
+  
+  const [analysis, setAnalysis] = useState<HypothesisAnalysis | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
 
-  useEffect(() => {
-    // Load logs from localStorage
-    const savedLogs = localStorage.getItem('healthLogs');
-    if (savedLogs) {
-      setLogs(JSON.parse(savedLogs));
-    }
-  }, []);
-
-  const handleAnalyze = async () => {
-    // Get lab work and medical tests data
-    const savedLabWork = localStorage.getItem('labWork');
-    const savedMedicalTests = localStorage.getItem('medicalTests');
-    const labWork = savedLabWork ? JSON.parse(savedLabWork) : [];
-    const medicalTests = savedMedicalTests ? JSON.parse(savedMedicalTests) : [];
-
-    if (logs.length < 3 && labWork.length === 0 && medicalTests.length === 0) {
+  const handleSignOut = async () => {
+    const { error } = await signOut();
+    if (error) {
       toast({
-        title: "Need more data",
-        description: "Please log at least 3 health entries or add some lab work before requesting AI analysis.",
+        title: "Error",
+        description: "Failed to sign out. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const generateAnalysis = async () => {
+    if (healthLogs.length === 0) {
+      toast({
+        title: "No Data Available",
+        description: "Please add some health logs before generating analysis.",
         variant: "destructive",
       });
       return;
@@ -42,17 +44,17 @@ const Dashboard = () => {
     setIsAnalyzing(true);
     
     try {
-      const aiAnalysis = await aiService.generateHypothesis(logs);
+      const aiAnalysis = await aiService.generateHypothesis(healthLogs);
       setAnalysis(aiAnalysis);
       
       toast({
-        title: "Analysis complete",
-        description: "AI has analyzed your health data including lab work and generated comprehensive insights.",
+        title: "Analysis Complete",
+        description: "AI has analyzed your health data and generated insights.",
       });
     } catch (error) {
       console.error('AI Analysis failed:', error);
       toast({
-        title: "Analysis failed",
+        title: "Analysis Failed",
         description: "Failed to generate AI analysis. Please try again.",
         variant: "destructive",
       });
@@ -61,97 +63,191 @@ const Dashboard = () => {
     }
   };
 
-
+  if (loading) {
+    return (
+      <ProtectedRoute>
+        <div className="min-h-screen flex items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+      </ProtectedRoute>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-gradient-subtle">
-      <div className="container mx-auto px-4 py-8">
+    <ProtectedRoute>
+      <div className="min-h-screen bg-gradient-subtle">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-4">
-            <Link to="/">
-              <Button variant="outline" size="sm">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Logging
-              </Button>
-            </Link>
-            <div>
-              <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
-                <TrendingUp className="h-8 w-8 text-primary" />
-                Health Dashboard
-              </h1>
-              <p className="text-muted-foreground">
-                Track patterns and insights from your health data
-              </p>
+        <div className="bg-gradient-primary text-primary-foreground">
+          <div className="container mx-auto px-4 py-8">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <Link to="/">
+                  <Button variant="outline" size="sm" className="bg-white/20 text-white border-white/30 hover:bg-white/30">
+                    <ArrowLeft className="h-4 w-4 mr-2" />
+                    Home
+                  </Button>
+                </Link>
+                <div>
+                  <h1 className="text-3xl font-bold mb-2 flex items-center gap-2">
+                    <TrendingUp className="h-8 w-8" />
+                    Health Dashboard
+                  </h1>
+                  <p className="text-primary-foreground/80">
+                    Welcome back, {user?.email}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-4">
+                <Link to="/lab-work">
+                  <Button variant="outline" size="sm" className="bg-white/20 text-white border-white/30 hover:bg-white/30">
+                    <TestTube className="h-4 w-4 mr-2" />
+                    Lab Work
+                  </Button>
+                </Link>
+                <div className="flex items-center gap-2 bg-white/20 rounded-lg px-3 py-2">
+                  <User className="h-4 w-4" />
+                  <span className="text-sm">{user?.email}</span>
+                </div>
+                <Button
+                  onClick={handleSignOut}
+                  variant="outline"
+                  size="sm"
+                  className="bg-white/20 text-white border-white/30 hover:bg-white/30"
+                >
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Sign Out
+                </Button>
+              </div>
             </div>
           </div>
-          
-          <Link to="/lab-work">
-            <Button variant="outline" size="sm">
-              <Brain className="h-4 w-4 mr-2" />
-              Lab Work & Tests
-            </Button>
-          </Link>
         </div>
 
-        {/* AI Analysis Results */}
-        {analysis && <AIAnalysisCard analysis={analysis} />}
-
-        {/* Coming Soon Features */}
-        {logs.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-            <Card className="shadow-card opacity-75">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-sm">
-                  <Search className="h-4 w-4" />
-                  Reddit Case Search
-                  <span className="text-xs bg-accent text-accent-foreground px-2 py-1 rounded">Coming Soon</span>
-                </CardTitle>
+        <div className="container mx-auto px-4 py-8">
+          {/* Stats Overview */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <Card className="shadow-card">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg">Total Logs</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  Find similar health cases and experiences from Reddit communities
-                </p>
+                <div className="text-3xl font-bold text-primary">{healthLogs.length}</div>
+                <CardDescription>Health entries recorded</CardDescription>
               </CardContent>
             </Card>
 
-            <Card className="shadow-card opacity-75">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-sm">
-                  <TrendingUp className="h-4 w-4" />
-                  Visual Charts
-                  <span className="text-xs bg-accent text-accent-foreground px-2 py-1 rounded">Coming Soon</span>
-                </CardTitle>
+            <Card className="shadow-card">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg">Average Severity</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  Interactive charts showing symptom trends over time
-                </p>
+                <div className="text-3xl font-bold text-primary">
+                  {healthLogs.length > 0 ? Math.round(healthLogs.reduce((sum, log) => sum + log.severity, 0) / healthLogs.length) : 0}
+                </div>
+                <CardDescription>Out of 10</CardDescription>
+              </CardContent>
+            </Card>
+
+            <Card className="shadow-card">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg">Average Sleep</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-primary">
+                  {healthLogs.length > 0 ? (healthLogs.reduce((sum, log) => sum + log.sleep, 0) / healthLogs.length).toFixed(1) : 0}h
+                </div>
+                <CardDescription>Hours per night</CardDescription>
               </CardContent>
             </Card>
           </div>
-        )}
 
-        {/* Main Dashboard */}
-        <LogDashboard 
-          logs={logs} 
-          onAnalyze={handleAnalyze}
-        />
-
-        {/* Loading Analysis */}
-        {isAnalyzing && (
-          <Card className="mt-8 shadow-medical">
-            <CardContent className="p-8 text-center">
-              <Brain className="h-12 w-12 text-primary mx-auto mb-4 animate-pulse" />
-              <h3 className="text-lg font-semibold mb-2">Generating AI Hypotheses</h3>
-              <p className="text-muted-foreground">
-                AI is analyzing your {logs.length} health logs to generate hypotheses and identify patterns...
-              </p>
+          {/* AI Analysis Section */}
+          <Card className="shadow-card mb-8">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Brain className="h-5 w-5" />
+                AI Analysis
+              </CardTitle>
+              <CardDescription>
+                Get AI-powered insights from your health data
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button 
+                onClick={generateAnalysis} 
+                disabled={isAnalyzing || healthLogs.length === 0}
+                className="shadow-medical"
+              >
+                {isAnalyzing ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Analyzing...
+                  </>
+                ) : (
+                  <>
+                    <Brain className="mr-2 h-4 w-4" />
+                    Generate AI Analysis ({healthLogs.length} logs)
+                  </>
+                )}
+              </Button>
             </CardContent>
           </Card>
-        )}
+
+          {/* AI Analysis Results */}
+          {analysis && <AIAnalysisCard analysis={analysis} />}
+
+          {/* Coming Soon Features */}
+          {healthLogs.length > 0 && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+              <Card className="shadow-card opacity-75">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-sm">
+                    <Search className="h-4 w-4" />
+                    Reddit Case Search
+                    <span className="text-xs bg-accent text-accent-foreground px-2 py-1 rounded">Coming Soon</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground">
+                    Find similar health cases and experiences from Reddit communities
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card className="shadow-card opacity-75">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-sm">
+                    <TrendingUp className="h-4 w-4" />
+                    Visual Charts
+                    <span className="text-xs bg-accent text-accent-foreground px-2 py-1 rounded">Coming Soon</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground">
+                    Interactive charts showing symptom trends over time
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {/* Health Logs */}
+          <LogDashboard logs={healthLogs} />
+
+          {/* Loading Analysis */}
+          {isAnalyzing && (
+            <Card className="mt-8 shadow-medical">
+              <CardContent className="p-8 text-center">
+                <Brain className="h-12 w-12 text-primary mx-auto mb-4 animate-pulse" />
+                <h3 className="text-lg font-semibold mb-2">Generating AI Hypotheses</h3>
+                <p className="text-muted-foreground">
+                  AI is analyzing your {healthLogs.length} health logs to generate hypotheses and identify patterns...
+                </p>
+              </CardContent>
+            </Card>
+          )}
+        </div>
       </div>
-    </div>
+    </ProtectedRoute>
   );
 };
 

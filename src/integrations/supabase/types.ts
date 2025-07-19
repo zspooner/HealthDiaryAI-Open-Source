@@ -23,6 +23,7 @@ export type Database = {
           notes: string | null
           symptoms: string | null
           updated_at: string | null
+          user_id: string | null
         }
         Insert: {
           created_at?: string | null
@@ -32,6 +33,7 @@ export type Database = {
           notes?: string | null
           symptoms?: string | null
           updated_at?: string | null
+          user_id?: string | null
         }
         Update: {
           created_at?: string | null
@@ -41,6 +43,7 @@ export type Database = {
           notes?: string | null
           symptoms?: string | null
           updated_at?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -54,6 +57,7 @@ export type Database = {
           id: string
           type: string | null
           updated_at: string | null
+          user_id: string | null
         }
         Insert: {
           confidence?: number | null
@@ -64,6 +68,7 @@ export type Database = {
           id?: string
           type?: string | null
           updated_at?: string | null
+          user_id?: string | null
         }
         Update: {
           confidence?: number | null
@@ -74,6 +79,31 @@ export type Database = {
           id?: string
           type?: string | null
           updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }

@@ -1,140 +1,137 @@
-import React, { useState, useEffect } from 'react';
-import { LogForm } from '@/components/LogForm';
-import { RedditSearch } from '@/components/RedditSearch';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Activity, Brain, TrendingUp, Users, ArrowRight, TestTube } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import type { HealthLog } from '@/types/health';
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Heart, BarChart3, Brain, Shield, Loader2, Activity, TestTube, TrendingUp } from "lucide-react";
 
 const Index = () => {
-  const [totalLogs, setTotalLogs] = useState(0);
+  const navigate = useNavigate();
+  const { user, loading } = useAuth();
 
   useEffect(() => {
-    const savedLogs = localStorage.getItem('healthLogs');
-    if (savedLogs) {
-      setTotalLogs(JSON.parse(savedLogs).length);
+    if (user && !loading) {
+      navigate('/dashboard');
     }
-  }, []);
+  }, [user, loading, navigate]);
 
-  const handleLogAdded = (log: HealthLog) => {
-    setTotalLogs(prev => prev + 1);
-  };
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-gradient-subtle">
-      {/* Header */}
-      <div className="bg-gradient-primary text-primary-foreground">
-        <div className="container mx-auto px-4 py-12">
-          <div className="text-center max-w-3xl mx-auto">
-            <div className="flex items-center justify-center gap-3 mb-6">
-              <Activity className="h-12 w-12" />
-              <h1 className="text-4xl md:text-5xl font-bold">Data Diary</h1>
-            </div>
-            <p className="text-xl md:text-2xl mb-8 text-primary-foreground/90">
-              Your Personal Health Detective
-            </p>
-            <p className="text-lg text-primary-foreground/80 mb-8">
-              Track symptoms, analyze patterns with AI, and discover insights to help solve your health mysteries
-            </p>
-            
-            {totalLogs > 0 && (
-              <div className="flex items-center justify-center gap-4">
-                <div className="bg-white/20 rounded-lg px-4 py-2">
-                  <span className="text-2xl font-bold">{totalLogs}</span>
-                  <p className="text-sm">Health Logs</p>
-                </div>
-                <Link to="/dashboard">
-                  <Button variant="secondary" className="bg-white text-primary hover:bg-white/90">
-                    View Dashboard
-                    <ArrowRight className="h-4 w-4 ml-2" />
-                  </Button>
-                </Link>
-              </div>
-            )}
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+      <div className="container mx-auto px-4 py-16">
+        <div className="text-center mb-16">
+          <div className="flex items-center justify-center gap-3 mb-6">
+            <Activity className="h-12 w-12 text-primary" />
+            <h1 className="text-5xl font-bold text-gray-900 dark:text-white">
+              Medical Tracker
+            </h1>
+          </div>
+          <p className="text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-3xl mx-auto">
+            Your comprehensive health tracking companion with AI-powered insights. 
+            Monitor symptoms, track medications, and discover patterns in your health data.
+          </p>
+          <div className="flex gap-4 justify-center">
+            <Button 
+              onClick={() => navigate('/auth')} 
+              size="lg"
+              className="text-lg px-8 py-3"
+            >
+              Get Started
+            </Button>
+            <Button 
+              onClick={() => navigate('/auth')} 
+              variant="outline" 
+              size="lg"
+              className="text-lg px-8 py-3"
+            >
+              Sign In
+            </Button>
           </div>
         </div>
-      </div>
 
-      <div className="container mx-auto px-4 py-12">
-        {/* Features Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-          <Card className="shadow-card">
-            <CardHeader className="text-center">
-              <Activity className="h-8 w-8 text-primary mx-auto mb-2" />
-              <CardTitle>Daily Logging</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <CardDescription className="text-center">
-                Record symptoms, medications, mood, and sleep patterns with our comprehensive logging system
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
+          <Card className="transform hover:scale-105 transition-transform duration-200">
+            <CardHeader>
+              <Heart className="h-8 w-8 text-red-600 mb-2" />
+              <CardTitle>Health Logging</CardTitle>
+              <CardDescription>
+                Track symptoms, medications, mood, sleep, and daily health metrics with ease.
               </CardDescription>
-            </CardContent>
+            </CardHeader>
           </Card>
 
-          <Card className="shadow-card">
-            <CardHeader className="text-center">
-              <TestTube className="h-8 w-8 text-primary mx-auto mb-2" />
+          <Card className="transform hover:scale-105 transition-transform duration-200">
+            <CardHeader>
+              <TestTube className="h-8 w-8 text-blue-600 mb-2" />
               <CardTitle>Lab Work & Tests</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <CardDescription className="text-center">
-                Track lab results, medical tests, and diagnostic reports to complement your symptom data
+              <CardDescription>
+                Record and monitor lab results, medical tests, and diagnostic reports.
               </CardDescription>
-            </CardContent>
+            </CardHeader>
           </Card>
 
-          <Card className="shadow-card">
-            <CardHeader className="text-center">
-              <Brain className="h-8 w-8 text-primary mx-auto mb-2" />
-              <CardTitle>AI Analysis</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <CardDescription className="text-center">
-                Discover hidden patterns and correlations in your health data using advanced AI pattern recognition
+          <Card className="transform hover:scale-105 transition-transform duration-200">
+            <CardHeader>
+              <BarChart3 className="h-8 w-8 text-green-600 mb-2" />
+              <CardTitle>Data Visualization</CardTitle>
+              <CardDescription>
+                View your health trends and patterns through intuitive charts and graphs.
               </CardDescription>
-            </CardContent>
+            </CardHeader>
           </Card>
 
-          <Card className="shadow-card">
-            <CardHeader className="text-center">
-              <TrendingUp className="h-8 w-8 text-primary mx-auto mb-2" />
-              <CardTitle>Insights & Trends</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <CardDescription className="text-center">
-                Visualize your health journey and get actionable insights to share with healthcare providers
+          <Card className="transform hover:scale-105 transition-transform duration-200">
+            <CardHeader>
+              <Brain className="h-8 w-8 text-purple-600 mb-2" />
+              <CardTitle>AI-Powered Insights</CardTitle>
+              <CardDescription>
+                Get intelligent analysis of your health patterns and receive personalized recommendations.
               </CardDescription>
-            </CardContent>
+            </CardHeader>
           </Card>
         </div>
 
-        {/* Main Logging Form */}
-        <div className="max-w-2xl mx-auto mb-8">
-          <LogForm onLogAdded={handleLogAdded} />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
+          <Card className="transform hover:scale-105 transition-transform duration-200">
+            <CardHeader>
+              <Shield className="h-8 w-8 text-green-600 mb-2" />
+              <CardTitle>Secure & Private</CardTitle>
+              <CardDescription>
+                Your health data is encrypted and secure with user authentication and privacy protection.
+              </CardDescription>
+            </CardHeader>
+          </Card>
+
+          <Card className="transform hover:scale-105 transition-transform duration-200">
+            <CardHeader>
+              <TrendingUp className="h-8 w-8 text-blue-600 mb-2" />
+              <CardTitle>Progress Tracking</CardTitle>
+              <CardDescription>
+                Monitor your health journey over time and share insights with healthcare providers.
+              </CardDescription>
+            </CardHeader>
+          </Card>
         </div>
 
-        {/* Quick Access */}
-        <div className="flex justify-center gap-4 flex-wrap">
-          {totalLogs > 0 && (
-            <Link to="/dashboard">
-              <Button variant="outline" size="lg" className="shadow-medical">
-                <TrendingUp className="h-5 w-5 mr-2" />
-                View Your {totalLogs} Health {totalLogs === 1 ? 'Log' : 'Logs'}
-              </Button>
-            </Link>
-          )}
-          
-          <Link to="/lab-work">
-            <Button variant="outline" size="lg" className="shadow-medical">
-              <TestTube className="h-5 w-5 mr-2" />
-              Add Lab Work & Tests
-            </Button>
-          </Link>
-        </div>
-
-        {/* Reddit Case Search */}
-        <div className="mt-16">
-          <RedditSearch />
+        <div className="text-center mt-16">
+          <p className="text-gray-600 dark:text-gray-300 mb-4">
+            Ready to take control of your health?
+          </p>
+          <Button 
+            onClick={() => navigate('/auth')} 
+            size="lg"
+            variant="outline"
+            className="text-lg px-8 py-3"
+          >
+            Create Your Account
+          </Button>
         </div>
       </div>
     </div>
