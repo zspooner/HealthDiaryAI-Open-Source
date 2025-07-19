@@ -338,24 +338,6 @@ const Dashboard = () => {
             </div>
           )}
 
-          {/* Reddit Search Results for General Analysis */}
-          {redditResults && (
-            <div className="space-y-4 animate-fade-in">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold text-foreground">Community Cases (General Analysis)</h2>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setRedditResults(null)}
-                  className="hover:bg-destructive/10 hover:text-destructive"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-              <RedditResultsCard results={redditResults} />
-            </div>
-          )}
-
           {/* Medical Hypotheses Results */}
           {medicalHypotheses && (
             <div className="space-y-4 animate-fade-in">
@@ -374,21 +356,24 @@ const Dashboard = () => {
             </div>
           )}
 
-          {/* Reddit Search Results for Medical Hypotheses */}
-          {hypothesesRedditResults && (
+          {/* Combined Reddit Search Results */}
+          {(redditResults || hypothesesRedditResults) && (
             <div className="space-y-4 animate-fade-in">
               <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold text-foreground">Community Cases (Medical Hypotheses)</h2>
+                <h2 className="text-xl font-semibold text-foreground">Community Cases</h2>
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => setHypothesesRedditResults(null)}
+                  onClick={() => {
+                    setRedditResults(null);
+                    setHypothesesRedditResults(null);
+                  }}
                   className="hover:bg-destructive/10 hover:text-destructive"
                 >
                   <X className="h-4 w-4" />
                 </Button>
               </div>
-              <RedditResultsCard results={hypothesesRedditResults} />
+              <RedditResultsCard results={redditResults || hypothesesRedditResults} />
             </div>
           )}
 
