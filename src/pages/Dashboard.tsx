@@ -74,6 +74,44 @@ const Dashboard = () => {
     }
   };
 
+  const generateMedicalHypotheses = async () => {
+    if (healthLogs.length === 0) {
+      toast({
+        title: "No Data Available",
+        description: "Please add some health logs before generating medical hypotheses.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsAnalyzing(true);
+    
+    try {
+      // Run medical hypotheses and Reddit search in parallel
+      const [medicalAnalysis, redditSearchResults] = await Promise.all([
+        aiService.generateMedicalHypotheses(healthLogs),
+        redditSearchService.searchSimilarCases(healthLogs)
+      ]);
+      
+      setAnalysis(medicalAnalysis);
+      setRedditResults(redditSearchResults);
+      
+      toast({
+        title: "Medical Hypotheses Generated",
+        description: `Medical hypotheses complete with ${redditSearchResults.posts.length} similar Reddit cases found. Remember to discuss these with your doctor.`,
+      });
+    } catch (error) {
+      console.error('Medical Hypotheses failed:', error);
+      toast({
+        title: "Analysis Failed",
+        description: "Failed to generate medical hypotheses. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
   if (loading) {
     return (
       <ProtectedRoute>
@@ -216,7 +254,7 @@ const Dashboard = () => {
               </CardHeader>
               <CardContent>
                 <Button 
-                  onClick={generateAnalysis} 
+                  onClick={generateMedicalHypotheses} 
                   disabled={isAnalyzing || healthLogs.length === 0}
                   className="w-full shadow-medical bg-purple-600 hover:bg-purple-700"
                 >
@@ -228,7 +266,7 @@ const Dashboard = () => {
                   ) : (
                     <>
                       <Brain className="mr-2 h-4 w-4" />
-                      Generate Hypotheses ({healthLogs.length} logs)
+                      Generate Medical Hypotheses ({healthLogs.length} logs)
                     </>
                   )}
                 </Button>

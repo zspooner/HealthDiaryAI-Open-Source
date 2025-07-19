@@ -60,6 +60,47 @@ class AIService {
     }
   }
 
+  async generateMedicalHypotheses(logs: HealthLog[]): Promise<HypothesisAnalysis> {
+    try {
+      console.log('Starting medical hypotheses generation with logs:', logs.length);
+      
+      // Call the secure Edge Function with focus on medical causes
+      const response = await fetch('https://opiuyyiqkmmiffaagqnk.supabase.co/functions/v1/ai-analysis', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          logs, 
+          analysisType: 'medical_hypotheses',
+          focusOnCauses: true 
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Edge function error:', response.status, errorText);
+        throw new Error(`Edge function error: ${response.status} ${errorText}`);
+      }
+
+      const analysis = await response.json();
+      console.log('Successfully received medical hypotheses from Edge Function');
+      return analysis as HypothesisAnalysis;
+
+    } catch (error) {
+      console.error('Medical Hypotheses Error:', error);
+      console.error('Error details:', {
+        message: error.message,
+        name: error.name,
+        stack: error.stack
+      });
+      
+      // If the Edge Function fails, use medical hypotheses fallback
+      console.log('Edge function failed, using medical hypotheses fallback analysis');
+      return this.generateMedicalHypothesesFallback(logs);
+    }
+  }
+
   // This method is no longer needed as formatting is done in the Edge Function
   // Keeping it for potential future use or local fallback
 
@@ -103,6 +144,53 @@ class AIService {
         'Consider lifestyle modifications based on patterns'
       ],
       disclaimer: "This is a local analysis based on your logged data. For comprehensive medical evaluation, please consult with your healthcare provider. This analysis is for informational purposes only and should not replace professional medical advice."
+    };
+  }
+
+  private generateMedicalHypothesesFallback(logs: HealthLog[]): HypothesisAnalysis {
+    console.log('Generating medical hypotheses fallback based on local data');
+    
+    const commonSymptoms = this.getCommonSymptoms(logs);
+    const avgSeverity = logs.reduce((sum, log) => sum + log.severity, 0) / logs.length;
+    const avgSleep = logs.reduce((sum, log) => sum + log.sleep, 0) / logs.length;
+    
+    return {
+      patterns: [
+        `Primary symptoms: ${commonSymptoms.join(', ')}`,
+        `Severity pattern: ${avgSeverity.toFixed(1)}/10 average`,
+        `Sleep correlation: ${avgSleep.toFixed(1)} hours average`,
+        this.getSeverityTrend(logs)
+      ],
+      potentialCauses: [
+        'Inflammatory conditions (discuss with doctor)',
+        'Autoimmune disorders (requires medical evaluation)',
+        'Hormonal imbalances (blood work recommended)',
+        'Chronic stress syndrome (lifestyle and medical assessment)',
+        'Nutritional deficiencies (lab testing suggested)',
+        'Sleep disorders (sleep study may be warranted)',
+        'Medication side effects (review with physician)',
+        'Environmental triggers (allergy testing consideration)'
+      ],
+      recommendations: [
+        '⚠️ IMPORTANT: Discuss these hypotheses with your doctor',
+        'Request comprehensive blood work and physical exam',
+        'Consider keeping a detailed symptom diary for your doctor',
+        'Note any triggers or patterns to discuss during consultation',
+        'Bring this analysis to your next medical appointment'
+      ],
+      riskFactors: [
+        'Persistent symptoms requiring professional evaluation',
+        'Multiple symptom patterns suggesting systematic causes',
+        'Impact on daily functioning and quality of life'
+      ],
+      nextSteps: [
+        '🏥 Schedule appointment with healthcare provider',
+        '📋 Prepare list of symptoms and patterns for doctor visit',
+        '🔬 Request appropriate diagnostic tests as recommended',
+        '📝 Continue detailed symptom tracking until medical consultation',
+        '💊 Review current medications with doctor for interactions'
+      ],
+      disclaimer: "🚨 MEDICAL DISCLAIMER: These are potential hypotheses only and require professional medical evaluation. This analysis is NOT a diagnosis and should not replace consultation with qualified healthcare providers. Please discuss all symptoms and potential causes with your doctor, who can order appropriate tests and provide proper medical assessment."
     };
   }
 

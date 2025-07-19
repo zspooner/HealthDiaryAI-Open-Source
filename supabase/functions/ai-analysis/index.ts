@@ -34,13 +34,14 @@ serve(async (req) => {
 
   try {
     console.log('AI Analysis Edge Function called');
-    const { logs } = await req.json();
+    const { logs, analysisType, focusOnCauses } = await req.json();
     
     if (!logs || !Array.isArray(logs)) {
       throw new Error('Invalid logs data provided');
     }
 
     console.log('Processing', logs.length, 'health logs');
+    console.log('Analysis type:', analysisType || 'standard');
 
     const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
     
@@ -61,7 +62,40 @@ serve(async (req) => {
 
     const logsSummary = formatLogsForAnalysis(logs);
     
-    const prompt = `You are a medical AI assistant analyzing health logs to identify patterns and generate hypotheses. 
+    // Different prompts based on analysis type
+    let prompt: string;
+    
+    if (analysisType === 'medical_hypotheses' || focusOnCauses) {
+      prompt = `You are a medical AI assistant generating potential medical hypotheses about symptom causes. 
+
+CRITICAL: You are NOT diagnosing or providing medical treatment. You are generating hypotheses about potential CAUSES that require professional medical evaluation.
+
+Analyze the following health logs and provide potential medical hypotheses in this exact JSON format:
+
+{
+  "patterns": ["symptom pattern 1", "symptom pattern 2", "symptom pattern 3"],
+  "potentialCauses": ["Medical condition 1 (requires doctor evaluation)", "Medical condition 2 (needs medical testing)", "Medical condition 3 (discuss with physician)"],
+  "recommendations": ["🚨 IMPORTANT: Discuss these hypotheses with your doctor", "Request comprehensive medical evaluation", "Consider specific medical tests as recommended by physician"],
+  "riskFactors": ["Medical risk factor 1", "Medical risk factor 2"],
+  "nextSteps": ["🏥 Schedule appointment with healthcare provider", "📋 Prepare symptom summary for doctor", "🔬 Request appropriate diagnostic tests"],
+  "disclaimer": "🚨 MEDICAL DISCLAIMER: These are potential medical hypotheses only and require professional medical evaluation. This analysis is NOT a diagnosis and should not replace consultation with qualified healthcare providers. Please discuss all symptoms and potential causes with your doctor immediately."
+}
+
+Health Logs Data:
+${logsSummary}
+
+Focus specifically on:
+- Potential medical conditions that could cause these symptoms
+- Systematic diseases that might explain symptom patterns
+- Inflammatory, autoimmune, or metabolic conditions
+- Hormonal or nutritional causes
+- Infectious disease possibilities
+- Medication side effects or interactions
+- When immediate medical attention may be warranted
+
+Generate specific medical hypotheses that a doctor should evaluate. Always emphasize the need for professional medical consultation.`;
+    } else {
+      prompt = `You are a medical AI assistant analyzing health logs to identify patterns and generate hypotheses. 
 
 IMPORTANT: You are NOT providing medical diagnosis or treatment. You are analyzing patterns and suggesting possible correlations that should be discussed with healthcare professionals.
 
@@ -87,6 +121,7 @@ Focus on:
 - Patterns that suggest when to seek medical attention
 
 Be specific but cautious. If you see concerning patterns, emphasize the need for professional evaluation.`;
+    }
 
     console.log('Calling OpenAI API');
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -155,8 +190,10 @@ Be specific but cautious. If you see concerning patterns, emphasize the need for
     
     // Return fallback analysis on any error
     try {
-      const { logs } = await req.json();
-      const fallbackAnalysis = generateFallbackAnalysis(logs || []);
+      const { logs, analysisType, focusOnCauses } = await req.json();
+      const fallbackAnalysis = (analysisType === 'medical_hypotheses' || focusOnCauses) 
+        ? generateMedicalHypothesesFallback(logs || [])
+        : generateFallbackAnalysis(logs || []);
       return new Response(JSON.stringify(fallbackAnalysis), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -245,6 +282,65 @@ function generateFallbackAnalysis(logs: HealthLog[]): HypothesisAnalysis {
       'Consider lifestyle modifications based on patterns'
     ],
     disclaimer: "This is a local analysis based on your logged data. For comprehensive medical evaluation, please consult with your healthcare provider. This analysis is for informational purposes only and should not replace professional medical advice."
+  };
+}
+
+function generateMedicalHypothesesFallback(logs: HealthLog[]): HypothesisAnalysis {
+  console.log('Generating medical hypotheses fallback for', logs.length, 'logs');
+  
+  if (logs.length === 0) {
+    return {
+      patterns: ['No health logs available for medical analysis'],
+      potentialCauses: ['Insufficient data to generate medical hypotheses'],
+      recommendations: ['🚨 Start logging symptoms and consult with healthcare provider'],
+      riskFactors: [],
+      nextSteps: ['🏥 Schedule medical consultation for proper evaluation'],
+      disclaimer: "🚨 MEDICAL DISCLAIMER: No symptoms to analyze. Please consult with your healthcare provider for proper medical evaluation."
+    };
+  }
+  
+  const commonSymptoms = getCommonSymptoms(logs);
+  const avgSeverity = logs.reduce((sum, log) => sum + (log.severity || 0), 0) / logs.length;
+  const avgSleep = logs.reduce((sum, log) => sum + (log.sleep || 0), 0) / logs.length;
+  
+  return {
+    patterns: [
+      `Primary symptoms: ${commonSymptoms.join(', ') || 'Various symptoms recorded'}`,
+      `Severity pattern: ${avgSeverity.toFixed(1)}/10 average`,
+      `Sleep correlation: ${avgSleep.toFixed(1)} hours average`,
+      getSeverityTrend(logs)
+    ],
+    potentialCauses: [
+      'Inflammatory conditions (requires medical evaluation)',
+      'Autoimmune disorders (blood work and specialist consultation needed)',
+      'Hormonal imbalances (endocrine evaluation recommended)',
+      'Chronic stress syndrome (multidisciplinary assessment)',
+      'Nutritional deficiencies (laboratory testing suggested)',
+      'Sleep disorders (sleep study consideration)',
+      'Medication side effects (pharmacological review)',
+      'Environmental or infectious triggers (specialist evaluation)'
+    ],
+    recommendations: [
+      '🚨 IMPORTANT: Discuss these hypotheses with your doctor immediately',
+      'Request comprehensive blood work and physical examination',
+      'Consider specialist referrals as recommended by physician',
+      'Prepare detailed symptom timeline for medical consultation',
+      'Bring this analysis to your next medical appointment'
+    ],
+    riskFactors: [
+      'Persistent symptoms requiring professional medical evaluation',
+      'Multiple symptom patterns suggesting systematic causes',
+      'Impact on daily functioning and quality of life',
+      'Need for proper diagnostic workup and testing'
+    ],
+    nextSteps: [
+      '🏥 Schedule urgent appointment with healthcare provider',
+      '📋 Prepare comprehensive list of symptoms for doctor visit',
+      '🔬 Request appropriate diagnostic tests as recommended',
+      '📝 Continue detailed symptom tracking until medical consultation',
+      '💊 Review all medications with doctor for potential interactions'
+    ],
+    disclaimer: "🚨 MEDICAL DISCLAIMER: These are potential medical hypotheses only and require immediate professional medical evaluation. This analysis is NOT a diagnosis and should not replace urgent consultation with qualified healthcare providers. Please discuss all symptoms and potential causes with your doctor, who can order appropriate tests and provide proper medical assessment."
   };
 }
 
