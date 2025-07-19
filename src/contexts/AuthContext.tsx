@@ -6,8 +6,10 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
+  isGuest: boolean;
   signUp: (email: string, password: string, displayName?: string) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
+  signInAsGuest: () => Promise<{ error: any }>;
   signOut: () => Promise<{ error: any }>;
 }
 
@@ -25,6 +27,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isGuest, setIsGuest] = useState(false);
 
   useEffect(() => {
     // Set up auth state listener FIRST
@@ -43,6 +46,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(session?.user ?? null);
       setLoading(false);
     });
+
+    // Check for guest mode in localStorage
+    const guestMode = localStorage.getItem('isGuestMode');
+    if (guestMode === 'true') {
+      setIsGuest(true);
+      setLoading(false);
+    }
 
     return () => subscription.unsubscribe();
   }, []);
@@ -79,8 +89,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return { error };
   };
 
+  const signInAsGuest = async () => {
+    setLoading(true);
+    
+    // Set guest mode in localStorage
+    localStorage.setItem('isGuestMode', 'true');
+    setIsGuest(true);
+    
+    setLoading(false);
+    return { error: null };
+  };
+
   const signOut = async () => {
     setLoading(true);
+    
+    // Clear guest mode
+    localStorage.removeItem('isGuestMode');
+    setIsGuest(false);
     
     const { error } = await supabase.auth.signOut();
     
@@ -92,8 +117,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     user,
     session,
     loading,
+    isGuest,
     signUp,
     signIn,
+    signInAsGuest,
     signOut,
   };
 

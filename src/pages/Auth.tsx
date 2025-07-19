@@ -11,7 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 
 const Auth = () => {
-  const { user, signIn, signUp, loading } = useAuth();
+  const { user, signIn, signUp, signInAsGuest, loading, isGuest } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   
@@ -26,10 +26,10 @@ const Auth = () => {
 
   // Redirect if already authenticated
   useEffect(() => {
-    if (user && !loading) {
+    if ((user || isGuest) && !loading) {
       navigate('/dashboard');
     }
-  }, [user, loading, navigate]);
+  }, [user, isGuest, loading, navigate]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -105,6 +105,28 @@ const Auth = () => {
       setPassword('');
       setConfirmPassword('');
       setDisplayName('');
+    }
+    
+    setIsSubmitting(false);
+  };
+
+  const handleGuestSignIn = async () => {
+    setIsSubmitting(true);
+    
+    const { error } = await signInAsGuest();
+    
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Something went wrong. Please try again.",
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Welcome, Guest!",
+        description: "You're browsing as a guest. Your data won't be saved.",
+        variant: "default",
+      });
     }
     
     setIsSubmitting(false);
@@ -214,11 +236,36 @@ const Auth = () => {
                   ) : (
                     'Sign In'
                   )}
-                </Button>
-              </form>
-            </TabsContent>
-            
-            <TabsContent value="signup">
+                 </Button>
+               </form>
+               
+               <div className="mt-6 pt-6 border-t border-border">
+                 <div className="space-y-3">
+                   <Alert>
+                     <AlertDescription className="text-sm">
+                       <strong>Just browsing?</strong> Continue as a guest, but note that your data won't be saved.
+                     </AlertDescription>
+                   </Alert>
+                   <Button 
+                     variant="outline" 
+                     onClick={handleGuestSignIn}
+                     disabled={isSubmitting}
+                     className="w-full"
+                   >
+                     {isSubmitting ? (
+                       <>
+                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                         Signing in as guest...
+                       </>
+                     ) : (
+                       'Continue as Guest'
+                     )}
+                   </Button>
+                 </div>
+               </div>
+             </TabsContent>
+             
+             <TabsContent value="signup">
               <form onSubmit={handleSignUp} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="signup-name">Display Name (Optional)</Label>
