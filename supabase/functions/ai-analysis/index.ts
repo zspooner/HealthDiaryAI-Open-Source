@@ -96,6 +96,35 @@ Focus specifically on:
 - When immediate medical attention may be warranted
 
 Generate specific medical hypotheses that a doctor should evaluate. Always emphasize the need for professional medical consultation.`;
+    } else if (analysisType === 'general_analysis') {
+      prompt = `You are a health AI assistant analyzing health logs to identify general patterns and insights. 
+
+IMPORTANT: You are NOT providing medical diagnosis or treatment. You are analyzing patterns and suggesting possible correlations that should be discussed with healthcare professionals.
+
+Analyze the following health logs and provide general insights in this exact JSON format:
+
+{
+  "patterns": ["pattern1", "pattern2", "pattern3"],
+  "potentialCauses": ["possible cause 1", "possible cause 2", "possible cause 3"],
+  "recommendations": ["recommendation 1", "recommendation 2", "recommendation 3"],
+  "riskFactors": ["risk factor 1", "risk factor 2"],
+  "nextSteps": ["next step 1", "next step 2", "next step 3"],
+  "disclaimer": "This analysis is for informational purposes only and should not replace professional medical advice. Please consult with your healthcare provider about any concerns."
+}
+
+Comprehensive Health Data:
+${dataSummary}
+
+Focus on:
+- General health patterns and trends
+- Lifestyle correlations (sleep, mood, stress, diet)
+- Temporal patterns (time of day, day of week, seasonal)
+- Symptom correlations with daily activities
+- Potential triggers or aggravating factors
+- Overall health insights and observations
+- Patterns that suggest when to seek medical attention
+
+Provide general health insights and patterns. Be specific but cautious. If you see concerning patterns, emphasize the need for professional evaluation.`;
     } else {
       prompt = `You are a medical AI assistant analyzing health logs to identify patterns and generate hypotheses. 
 

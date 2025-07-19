@@ -76,14 +76,14 @@ const Dashboard = () => {
       return;
     }
 
-    console.log('🚀 Starting AI Analysis - setting loading to true');
+    console.log('🚀 Starting General AI Analysis - setting loading to true');
     setIsAnalyzing(true);
     
     try {
-      // Run AI analysis first with all available data
-      console.log('🧠 Starting AI hypothesis generation...');
-      const aiAnalysis = await aiService.generateHypothesis(healthLogs, labWork, medicalTests);
-      console.log('✅ AI analysis completed:', aiAnalysis);
+      // Run general AI analysis with all available data
+      console.log('🧠 Starting general AI analysis...');
+      const aiAnalysis = await aiService.generateGeneralAnalysis(healthLogs, labWork, medicalTests);
+      console.log('✅ General AI analysis completed:', aiAnalysis);
       setAnalysis(aiAnalysis);
       
       // Try Reddit search separately, don't let it fail the main analysis
@@ -94,23 +94,23 @@ const Dashboard = () => {
         setRedditResults(redditSearchResults);
         const totalDataPoints = healthLogs.length + labWork.length + medicalTests.length;
         toast({
-          title: "Analysis Complete",
-          description: `AI analysis complete using ${totalDataPoints} data points with ${redditSearchResults.posts.length} similar Reddit cases found.`,
+          title: "General Analysis Complete",
+          description: `General AI analysis complete using ${totalDataPoints} data points with ${redditSearchResults.posts.length} similar Reddit cases found.`,
         });
       } catch (redditError) {
         console.warn('Reddit search failed, but AI analysis succeeded:', redditError);
         setRedditResults(null);
         const totalDataPoints = healthLogs.length + labWork.length + medicalTests.length;
         toast({
-          title: "Analysis Complete",
-          description: `AI analysis complete using ${totalDataPoints} data points. Reddit search temporarily unavailable.`,
+          title: "General Analysis Complete",
+          description: `General AI analysis complete using ${totalDataPoints} data points. Reddit search temporarily unavailable.`,
         });
       }
     } catch (error) {
-      console.error('❌ AI Analysis failed:', error);
+      console.error('❌ General AI Analysis failed:', error);
       toast({
-        title: "Analysis Failed",
-        description: "Failed to generate AI analysis. Please try again.",
+        title: "General Analysis Failed",
+        description: "Failed to generate general AI analysis. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -320,7 +320,7 @@ const Dashboard = () => {
             </Card>
           </div>
 
-          {/* AI Analysis Results */}
+          {/* General AI Analysis Results */}
           {analysis && (
             <div className="space-y-4 animate-fade-in">
               <div className="flex items-center justify-between">
@@ -418,14 +418,14 @@ const Dashboard = () => {
             </Tabs>
           </div>
 
-          {/* Loading Analysis */}
+          {/* Loading General Analysis */}
           {isAnalyzing && (
             <Card className="mt-8 shadow-medical">
               <CardContent className="p-8 text-center">
                 <Brain className="h-12 w-12 text-primary mx-auto mb-4 animate-pulse" />
                 <h3 className="text-lg font-semibold mb-2">Generating General AI Analysis & Searching Reddit</h3>
                 <p className="text-muted-foreground">
-                  AI is analyzing your {healthLogs.length} health logs, {labWork.length} lab work entries, and {medicalTests.length} medical tests for general patterns and searching for similar cases on Reddit...
+                  AI is analyzing your {healthLogs.length} health logs, {labWork.length} lab work entries, and {medicalTests.length} medical tests for general health patterns and searching for similar cases on Reddit...
                 </p>
               </CardContent>
             </Card>

@@ -5,17 +5,22 @@ class AIService {
     // AI analysis now handled securely via Supabase Edge Function
   }
 
-  async generateHypothesis(logs: HealthLog[], labWork: LabWork[] = [], medicalTests: MedicalTest[] = []): Promise<HypothesisAnalysis> {
+  async generateGeneralAnalysis(logs: HealthLog[], labWork: LabWork[] = [], medicalTests: MedicalTest[] = []): Promise<HypothesisAnalysis> {
     try {
-      console.log('Starting AI analysis with logs:', logs.length, 'lab work:', labWork.length, 'medical tests:', medicalTests.length);
+      console.log('Starting general AI analysis with logs:', logs.length, 'lab work:', labWork.length, 'medical tests:', medicalTests.length);
       
-      // Call the secure Edge Function instead of OpenAI directly
+      // Call the secure Edge Function for general analysis
       const response = await fetch('https://opiuyyiqkmmiffaagqnk.supabase.co/functions/v1/ai-analysis', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ logs, labWork, medicalTests }),
+        body: JSON.stringify({ 
+          logs, 
+          labWork, 
+          medicalTests,
+          analysisType: 'general_analysis'
+        }),
       });
 
       if (!response.ok) {
@@ -25,11 +30,11 @@ class AIService {
       }
 
       const analysis = await response.json();
-      console.log('Successfully received AI analysis from Edge Function');
+      console.log('Successfully received general AI analysis from Edge Function');
       return analysis as HypothesisAnalysis;
 
     } catch (error) {
-      console.error('AI Analysis Error:', error);
+      console.error('General AI Analysis Error:', error);
       console.error('Error details:', {
         message: error.message,
         name: error.name,
@@ -83,6 +88,11 @@ class AIService {
       console.log('Edge function failed, using medical hypotheses fallback analysis');
       return this.generateMedicalHypothesesFallback(logs, labWork, medicalTests);
     }
+  }
+
+  // Legacy method for backward compatibility - now calls general analysis
+  async generateHypothesis(logs: HealthLog[], labWork: LabWork[] = [], medicalTests: MedicalTest[] = []): Promise<HypothesisAnalysis> {
+    return this.generateGeneralAnalysis(logs, labWork, medicalTests);
   }
 
   // This method is no longer needed as formatting is done in the Edge Function
