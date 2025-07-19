@@ -28,11 +28,8 @@ const Dashboard = () => {
   const [medicalTests, setMedicalTests] = useState<MedicalTest[]>([]);
   
   const [analysis, setAnalysis] = useState<HypothesisAnalysis | null>(null);
-  const [medicalHypotheses, setMedicalHypotheses] = useState<HypothesisAnalysis | null>(null);
   const [redditResults, setRedditResults] = useState<RedditSearchResult | null>(null);
-  const [hypothesesRedditResults, setHypothesesRedditResults] = useState<RedditSearchResult | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [isGeneratingHypotheses, setIsGeneratingHypotheses] = useState(false);
 
   // Load lab work and medical tests from localStorage
   React.useEffect(() => {
@@ -119,58 +116,6 @@ const Dashboard = () => {
     }
   };
 
-  const generateMedicalHypotheses = async () => {
-    if (healthLogs.length === 0) {
-      toast({
-        title: "No Data Available",
-        description: "Please add some health logs before generating medical hypotheses.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    console.log('🚀 Starting Medical Hypotheses - setting loading to true');
-    setIsGeneratingHypotheses(true);
-    
-    try {
-      // Run medical hypotheses first with all available data
-      console.log('🧬 Starting medical hypotheses generation...');
-      const medicalAnalysis = await aiService.generateMedicalHypotheses(healthLogs, labWork, medicalTests);
-      console.log('✅ Medical hypotheses completed:', medicalAnalysis);
-      setMedicalHypotheses(medicalAnalysis);
-      
-      // Try Reddit search separately, don't let it fail the main analysis
-      try {
-        console.log('🔍 Starting Reddit search for hypotheses...');
-        const redditSearchResults = await redditSearchService.searchSimilarCases(healthLogs);
-        console.log('✅ Reddit search for hypotheses completed:', redditSearchResults);
-        setHypothesesRedditResults(redditSearchResults);
-        const totalDataPoints = healthLogs.length + labWork.length + medicalTests.length;
-        toast({
-          title: "Medical Hypotheses Generated",
-          description: `Medical hypotheses complete using ${totalDataPoints} data points with ${redditSearchResults.posts.length} similar Reddit cases found. Remember to discuss these with your doctor.`,
-        });
-      } catch (redditError) {
-        console.warn('Reddit search failed, but medical hypotheses succeeded:', redditError);
-        setHypothesesRedditResults(null);
-        const totalDataPoints = healthLogs.length + labWork.length + medicalTests.length;
-        toast({
-          title: "Medical Hypotheses Generated",
-          description: `Medical hypotheses complete using ${totalDataPoints} data points. Reddit search temporarily unavailable. Remember to discuss these with your doctor.`,
-        });
-      }
-    } catch (error) {
-      console.error('❌ Medical Hypotheses failed:', error);
-      toast({
-        title: "Analysis Failed",
-        description: "Failed to generate medical hypotheses. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      console.log('🏁 Medical Hypotheses finished - setting loading to false');
-      setIsGeneratingHypotheses(false);
-    }
-  };
 
   if (loading) {
     return (
@@ -256,7 +201,7 @@ const Dashboard = () => {
           </div>
 
           {/* AI Analysis Section */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          <div className="grid grid-cols-1 gap-6 mb-8">
             <Card className="shadow-card">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -270,7 +215,7 @@ const Dashboard = () => {
               <CardContent>
                 <Button 
                   onClick={generateAnalysis} 
-                  disabled={isAnalyzing || isGeneratingHypotheses || healthLogs.length === 0}
+                  disabled={isAnalyzing || healthLogs.length === 0}
                   className="w-full shadow-medical"
                 >
                   {isAnalyzing ? (
@@ -287,68 +232,21 @@ const Dashboard = () => {
                 </Button>
               </CardContent>
             </Card>
-
-            <Card className="shadow-card">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Brain className="h-5 w-5" />
-                  Generate Hypotheses
-                </CardTitle>
-                <CardDescription>
-                  Create medical hypotheses based on your symptom patterns, lab results, and test data
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button 
-                  onClick={generateMedicalHypotheses} 
-                  disabled={isAnalyzing || isGeneratingHypotheses || healthLogs.length === 0}
-                  className="w-full shadow-medical bg-purple-600 hover:bg-purple-700"
-                >
-                  {isGeneratingHypotheses ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Generating...
-                    </>
-                  ) : (
-                    <>
-                      <Brain className="mr-2 h-4 w-4" />
-                      Generate Medical Hypotheses ({healthLogs.length + labWork.length + medicalTests.length} records)
-                    </>
-                  )}
-                </Button>
-              </CardContent>
-            </Card>
           </div>
 
           {/* AI Analysis Results */}
           {analysis && (
             <div className="space-y-4">
-              <h2 className="text-xl font-semibold text-foreground">General AI Analysis</h2>
+              <h2 className="text-xl font-semibold text-foreground">AI Analysis Results</h2>
               <AIAnalysisCard analysis={analysis} />
             </div>
           )}
 
-          {/* Reddit Search Results for General Analysis */}
+          {/* Reddit Search Results */}
           {redditResults && (
             <div className="space-y-4">
-              <h2 className="text-xl font-semibold text-foreground">Community Cases (General Analysis)</h2>
+              <h2 className="text-xl font-semibold text-foreground">Community Cases</h2>
               <RedditResultsCard results={redditResults} />
-            </div>
-          )}
-
-          {/* Medical Hypotheses Results */}
-          {medicalHypotheses && (
-            <div className="space-y-4">
-              <h2 className="text-xl font-semibold text-foreground">Medical Hypotheses</h2>
-              <AIAnalysisCard analysis={medicalHypotheses} />
-            </div>
-          )}
-
-          {/* Reddit Search Results for Medical Hypotheses */}
-          {hypothesesRedditResults && (
-            <div className="space-y-4">
-              <h2 className="text-xl font-semibold text-foreground">Community Cases (Medical Hypotheses)</h2>
-              <RedditResultsCard results={hypothesesRedditResults} />
             </div>
           )}
 
@@ -383,22 +281,9 @@ const Dashboard = () => {
             <Card className="mt-8 shadow-medical">
               <CardContent className="p-8 text-center">
                 <Brain className="h-12 w-12 text-primary mx-auto mb-4 animate-pulse" />
-                <h3 className="text-lg font-semibold mb-2">Generating General AI Analysis & Searching Reddit</h3>
+                <h3 className="text-lg font-semibold mb-2">Generating AI Analysis & Searching Reddit</h3>
                 <p className="text-muted-foreground">
-                  AI is analyzing your {healthLogs.length} health logs, {labWork.length} lab work entries, and {medicalTests.length} medical tests for general patterns and searching for similar cases on Reddit...
-                </p>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Loading Medical Hypotheses */}
-          {isGeneratingHypotheses && (
-            <Card className="mt-8 shadow-medical bg-purple-50 border-purple-200">
-              <CardContent className="p-8 text-center">
-                <Brain className="h-12 w-12 text-purple-600 mx-auto mb-4 animate-pulse" />
-                <h3 className="text-lg font-semibold mb-2 text-purple-800">Generating Medical Hypotheses & Searching Reddit</h3>
-                <p className="text-purple-600">
-                  AI is generating medical hypotheses about potential causes from your {healthLogs.length} health logs, {labWork.length} lab work entries, and {medicalTests.length} medical tests and searching for similar medical cases on Reddit...
+                  AI is analyzing your {healthLogs.length} health logs, {labWork.length} lab work entries, and {medicalTests.length} medical tests for patterns and searching for similar cases on Reddit...
                 </p>
               </CardContent>
             </Card>
