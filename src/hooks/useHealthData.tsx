@@ -53,6 +53,8 @@ export const useHealthData = () => {
       const localHealthLogs = localStorage.getItem('healthLogs');
       const localHypotheses = localStorage.getItem('hypotheses');
 
+      let dataMigrated = false;
+
       if (localHealthLogs) {
         const logs: HealthLog[] = JSON.parse(localHealthLogs);
         
@@ -77,6 +79,7 @@ export const useHealthData = () => {
           console.error('Error migrating health logs:', logsError);
         } else {
           console.log('Successfully migrated health logs to Supabase');
+          dataMigrated = true;
         }
       }
 
@@ -104,17 +107,21 @@ export const useHealthData = () => {
           console.error('Error migrating hypotheses:', hypsError);
         } else {
           console.log('Successfully migrated hypotheses to Supabase');
+          dataMigrated = true;
         }
       }
 
-      // Clear localStorage after successful migration
-      localStorage.removeItem('healthLogs');
-      localStorage.removeItem('hypotheses');
-      
-      toast({
-        title: "Data Migrated",
-        description: "Your local data has been successfully migrated to your secure account.",
-      });
+      // Only show toast if data was actually migrated
+      if (dataMigrated) {
+        // Clear localStorage after successful migration
+        localStorage.removeItem('healthLogs');
+        localStorage.removeItem('hypotheses');
+        
+        toast({
+          title: "Data Migrated",
+          description: "Your local data has been successfully migrated to your secure account.",
+        });
+      }
 
     } catch (error) {
       console.error('Error during data migration:', error);
