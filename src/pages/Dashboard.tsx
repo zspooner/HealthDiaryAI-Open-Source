@@ -172,36 +172,70 @@ const Dashboard = () => {
           </div>
 
           {/* AI Analysis Section */}
-          <Card className="shadow-card mb-8">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Brain className="h-5 w-5" />
-                AI Analysis
-              </CardTitle>
-              <CardDescription>
-                Get AI-powered insights from your health data
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button 
-                onClick={generateAnalysis} 
-                disabled={isAnalyzing || healthLogs.length === 0}
-                className="shadow-medical"
-              >
-                {isAnalyzing ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Analyzing...
-                  </>
-                ) : (
-                  <>
-                    <Brain className="mr-2 h-4 w-4" />
-                    Generate AI Analysis ({healthLogs.length} logs)
-                  </>
-                )}
-              </Button>
-            </CardContent>
-          </Card>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <Card className="shadow-card">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Brain className="h-5 w-5" />
+                  AI Analysis
+                </CardTitle>
+                <CardDescription>
+                  Get comprehensive AI-powered insights from your health data
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button 
+                  onClick={generateAnalysis} 
+                  disabled={isAnalyzing || healthLogs.length === 0}
+                  className="w-full shadow-medical"
+                >
+                  {isAnalyzing ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Analyzing...
+                    </>
+                  ) : (
+                    <>
+                      <Brain className="mr-2 h-4 w-4" />
+                      Generate AI Analysis ({healthLogs.length} logs)
+                    </>
+                  )}
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card className="shadow-card">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Brain className="h-5 w-5" />
+                  Generate Hypotheses
+                </CardTitle>
+                <CardDescription>
+                  Create medical hypotheses based on your symptom patterns
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button 
+                  onClick={generateAnalysis} 
+                  disabled={isAnalyzing || healthLogs.length === 0}
+                  className="w-full shadow-medical"
+                  variant="outline"
+                >
+                  {isAnalyzing ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <Brain className="mr-2 h-4 w-4" />
+                      Generate Hypotheses ({healthLogs.length} logs)
+                    </>
+                  )}
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
 
           {/* AI Analysis Results */}
           {analysis && <AIAnalysisCard analysis={analysis} />}
