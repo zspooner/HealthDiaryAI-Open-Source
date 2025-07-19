@@ -218,8 +218,7 @@ const Dashboard = () => {
                 <Button 
                   onClick={generateAnalysis} 
                   disabled={isAnalyzing || healthLogs.length === 0}
-                  className="w-full shadow-medical"
-                  variant="outline"
+                  className="w-full shadow-medical bg-purple-600 hover:bg-purple-700"
                 >
                   {isAnalyzing ? (
                     <>
