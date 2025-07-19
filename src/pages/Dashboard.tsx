@@ -88,9 +88,9 @@ const Dashboard = () => {
       
       // Try Reddit search separately, don't let it fail the main analysis
       try {
-        console.log('🔍 Starting Reddit search...');
-        const redditSearchResults = await redditSearchService.searchSimilarCases(healthLogs);
-        console.log('✅ Reddit search completed:', redditSearchResults);
+        console.log('🔍 Starting Reddit search for general analysis...');
+        const redditSearchResults = await redditSearchService.searchSimilarCases(healthLogs, 'general');
+        console.log('✅ Reddit search for general analysis completed:', redditSearchResults);
         setRedditResults(redditSearchResults);
         const totalDataPoints = healthLogs.length + labWork.length + medicalTests.length;
         toast({
@@ -141,9 +141,9 @@ const Dashboard = () => {
       
       // Try Reddit search separately, don't let it fail the main analysis
       try {
-        console.log('🔍 Starting Reddit search for hypotheses...');
-        const redditSearchResults = await redditSearchService.searchSimilarCases(healthLogs);
-        console.log('✅ Reddit search for hypotheses completed:', redditSearchResults);
+        console.log('🔍 Starting Reddit search for medical hypotheses...');
+        const redditSearchResults = await redditSearchService.searchSimilarCases(healthLogs, 'medical');
+        console.log('✅ Reddit search for medical hypotheses completed:', redditSearchResults);
         setHypothesesRedditResults(redditSearchResults);
         const totalDataPoints = healthLogs.length + labWork.length + medicalTests.length;
         toast({
