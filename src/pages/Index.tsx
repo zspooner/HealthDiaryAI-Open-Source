@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { LogForm } from '@/components/LogForm';
+import { RedditSearch } from '@/components/RedditSearch';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Activity, Brain, TrendingUp, Users, ArrowRight, TestTube } from 'lucide-react';
@@ -131,34 +132,9 @@ const Index = () => {
           </Link>
         </div>
 
-        {/* Coming Soon Section */}
-        <div className="mt-16 text-center">
-          <h2 className="text-2xl font-bold mb-8 text-foreground">Coming Soon</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-            <Card className="shadow-card opacity-75">
-              <CardHeader>
-                <Users className="h-6 w-6 text-primary mx-auto mb-2" />
-                <CardTitle className="text-lg">Reddit Case Search</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <CardDescription>
-                  Find similar health experiences and stories from Reddit communities to gain additional insights
-                </CardDescription>
-              </CardContent>
-            </Card>
-
-            <Card className="shadow-card opacity-75">
-              <CardHeader>
-                <TrendingUp className="h-6 w-6 text-primary mx-auto mb-2" />
-                <CardTitle className="text-lg">Visual Charts</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <CardDescription>
-                  Interactive charts and graphs to visualize your symptom trends and health patterns over time
-                </CardDescription>
-              </CardContent>
-            </Card>
-          </div>
+        {/* Reddit Case Search */}
+        <div className="mt-16">
+          <RedditSearch />
         </div>
       </div>
     </div>
