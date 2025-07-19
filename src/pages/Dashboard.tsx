@@ -13,7 +13,7 @@ import { redditSearchService } from '@/services/redditSearch';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Brain, Loader2, LogOut, User, TrendingUp, TestTube, Activity } from 'lucide-react';
+import { Brain, Loader2, LogOut, User, TrendingUp, TestTube, Activity, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { HypothesisAnalysis } from '@/services/ai';
 import type { RedditSearchResult } from '@/services/redditSearch';
@@ -322,32 +322,72 @@ const Dashboard = () => {
 
           {/* AI Analysis Results */}
           {analysis && (
-            <div className="space-y-4">
-              <h2 className="text-xl font-semibold text-foreground">General AI Analysis</h2>
+            <div className="space-y-4 animate-fade-in">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-semibold text-foreground">General AI Analysis</h2>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setAnalysis(null)}
+                  className="hover:bg-destructive/10 hover:text-destructive"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
               <AIAnalysisCard analysis={analysis} />
             </div>
           )}
 
           {/* Reddit Search Results for General Analysis */}
           {redditResults && (
-            <div className="space-y-4">
-              <h2 className="text-xl font-semibold text-foreground">Community Cases (General Analysis)</h2>
+            <div className="space-y-4 animate-fade-in">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-semibold text-foreground">Community Cases (General Analysis)</h2>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setRedditResults(null)}
+                  className="hover:bg-destructive/10 hover:text-destructive"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
               <RedditResultsCard results={redditResults} />
             </div>
           )}
 
           {/* Medical Hypotheses Results */}
           {medicalHypotheses && (
-            <div className="space-y-4">
-              <h2 className="text-xl font-semibold text-foreground">Medical Hypotheses</h2>
+            <div className="space-y-4 animate-fade-in">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-semibold text-foreground">Medical Hypotheses</h2>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setMedicalHypotheses(null)}
+                  className="hover:bg-destructive/10 hover:text-destructive"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
               <AIAnalysisCard analysis={medicalHypotheses} />
             </div>
           )}
 
           {/* Reddit Search Results for Medical Hypotheses */}
           {hypothesesRedditResults && (
-            <div className="space-y-4">
-              <h2 className="text-xl font-semibold text-foreground">Community Cases (Medical Hypotheses)</h2>
+            <div className="space-y-4 animate-fade-in">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-semibold text-foreground">Community Cases (Medical Hypotheses)</h2>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setHypothesesRedditResults(null)}
+                  className="hover:bg-destructive/10 hover:text-destructive"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
               <RedditResultsCard results={hypothesesRedditResults} />
             </div>
           )}
