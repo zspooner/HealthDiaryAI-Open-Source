@@ -19,6 +19,8 @@ interface HypothesisAnalysis {
   riskFactors: string[];
   nextSteps: string[];
   disclaimer: string;
+  labInsights?: string[];
+  testCorrelations?: string[];
 }
 
 const corsHeaders = {
@@ -34,20 +36,20 @@ serve(async (req) => {
 
   try {
     console.log('AI Analysis Edge Function called');
-    const { logs, analysisType, focusOnCauses } = await req.json();
+    const { logs, labWork = [], medicalTests = [], analysisType, focusOnCauses } = await req.json();
     
     if (!logs || !Array.isArray(logs)) {
       throw new Error('Invalid logs data provided');
     }
 
-    console.log('Processing', logs.length, 'health logs');
+    console.log('Processing', logs.length, 'health logs,', labWork.length, 'lab work,', medicalTests.length, 'medical tests');
     console.log('Analysis type:', analysisType || 'standard');
 
     const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
     
     if (!openAIApiKey) {
       console.log('OpenAI API key not found, using fallback analysis');
-      return new Response(JSON.stringify(generateFallbackAnalysis(logs)), {
+      return new Response(JSON.stringify(generateFallbackAnalysis(logs, labWork, medicalTests)), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
@@ -55,12 +57,12 @@ serve(async (req) => {
     // Validate API key format
     if (!openAIApiKey.startsWith('sk-')) {
       console.log('Invalid API key format, using fallback analysis');
-      return new Response(JSON.stringify(generateFallbackAnalysis(logs)), {
+      return new Response(JSON.stringify(generateFallbackAnalysis(logs, labWork, medicalTests)), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    const logsSummary = formatLogsForAnalysis(logs);
+    const dataSummary = formatAllDataForAnalysis(logs, labWork, medicalTests);
     
     // Different prompts based on analysis type
     let prompt: string;
@@ -81,8 +83,8 @@ Analyze the following health logs and provide potential medical hypotheses in th
   "disclaimer": "🚨 MEDICAL DISCLAIMER: These are potential medical hypotheses only and require professional medical evaluation. This analysis is NOT a diagnosis and should not replace consultation with qualified healthcare providers. Please discuss all symptoms and potential causes with your doctor immediately."
 }
 
-Health Logs Data:
-${logsSummary}
+Comprehensive Health Data:
+${dataSummary}
 
 Focus specifically on:
 - Potential medical conditions that could cause these symptoms
@@ -110,8 +112,8 @@ Analyze the following health logs and provide insights in this exact JSON format
   "disclaimer": "This analysis is for informational purposes only and should not replace professional medical advice. Please consult with your healthcare provider about any concerns."
 }
 
-Health Logs Data:
-${logsSummary}
+Comprehensive Health Data:
+${dataSummary}
 
 Focus on:
 - Temporal patterns (time of day, day of week, seasonal)
@@ -153,7 +155,7 @@ Be specific but cautious. If you see concerning patterns, emphasize the need for
       
       if (response.status === 401 || response.status === 403) {
         console.log('API authentication error, using fallback analysis');
-        return new Response(JSON.stringify(generateFallbackAnalysis(logs)), {
+        return new Response(JSON.stringify(generateFallbackAnalysis(logs, labWork, medicalTests)), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
@@ -190,10 +192,10 @@ Be specific but cautious. If you see concerning patterns, emphasize the need for
     
     // Return fallback analysis on any error
     try {
-      const { logs, analysisType, focusOnCauses } = await req.json();
+      const { logs, labWork = [], medicalTests = [], analysisType, focusOnCauses } = await req.json();
       const fallbackAnalysis = (analysisType === 'medical_hypotheses' || focusOnCauses) 
-        ? generateMedicalHypothesesFallback(logs || [])
-        : generateFallbackAnalysis(logs || []);
+        ? generateMedicalHypothesesFallback(logs || [], labWork, medicalTests)
+        : generateFallbackAnalysis(logs || [], labWork, medicalTests);
       return new Response(JSON.stringify(fallbackAnalysis), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -214,6 +216,53 @@ Be specific but cautious. If you see concerning patterns, emphasize the need for
   }
 });
 
+function formatAllDataForAnalysis(logs: HealthLog[], labWork: any[], medicalTests: any[]): string {
+  let formattedData = formatLogsForAnalysis(logs);
+  
+  if (labWork.length > 0) {
+    formattedData += '\n\nLAB WORK DATA:\n';
+    labWork.forEach((lab, index) => {
+      formattedData += `\nLab Entry ${index + 1}:\n`;
+      formattedData += `Date: ${lab.date}\n`;
+      formattedData += `Lab/Facility: ${lab.labName}\n`;
+      formattedData += `Test Type: ${lab.testType}\n`;
+      if (lab.orderingPhysician) formattedData += `Ordering Physician: ${lab.orderingPhysician}\n`;
+      
+      if (lab.tests && lab.tests.length > 0) {
+        formattedData += 'Test Results:\n';
+        lab.tests.forEach((test: any) => {
+          formattedData += `  - ${test.name}: ${test.value}`;
+          if (test.unit) formattedData += ` ${test.unit}`;
+          if (test.referenceRange) formattedData += ` (Reference: ${test.referenceRange})`;
+          if (test.status) formattedData += ` [Status: ${test.status}]`;
+          if (test.notes) formattedData += ` - Notes: ${test.notes}`;
+          formattedData += '\n';
+        });
+      }
+      
+      if (lab.overallNotes) formattedData += `Overall Notes: ${lab.overallNotes}\n`;
+    });
+  }
+  
+  if (medicalTests.length > 0) {
+    formattedData += '\n\nMEDICAL TESTS/IMAGING DATA:\n';
+    medicalTests.forEach((test, index) => {
+      formattedData += `\nMedical Test ${index + 1}:\n`;
+      formattedData += `Date: ${test.date}\n`;
+      formattedData += `Test Type: ${test.testType}\n`;
+      formattedData += `Test Name: ${test.testName}\n`;
+      if (test.facility) formattedData += `Facility: ${test.facility}\n`;
+      if (test.orderingPhysician) formattedData += `Ordering Physician: ${test.orderingPhysician}\n`;
+      formattedData += `Results: ${test.results}\n`;
+      if (test.impression) formattedData += `Impression: ${test.impression}\n`;
+      if (test.recommendations) formattedData += `Recommendations: ${test.recommendations}\n`;
+      if (test.followUp) formattedData += `Follow-up: ${test.followUp}\n`;
+    });
+  }
+  
+  return formattedData;
+}
+
 function formatLogsForAnalysis(logs: HealthLog[]): string {
   return logs.map(log => {
     const date = new Date(log.date);
@@ -231,7 +280,7 @@ Notes: ${log.notes}
   }).join('\n');
 }
 
-function generateFallbackAnalysis(logs: HealthLog[]): HypothesisAnalysis {
+function generateFallbackAnalysis(logs: HealthLog[], labWork: any[] = [], medicalTests: any[] = []): HypothesisAnalysis {
   console.log('Generating fallback analysis for', logs.length, 'logs');
   
   if (logs.length === 0) {
@@ -250,13 +299,31 @@ function generateFallbackAnalysis(logs: HealthLog[]): HypothesisAnalysis {
   const commonSymptoms = getCommonSymptoms(logs);
   const severityTrend = getSeverityTrend(logs);
   
+  const patterns = [
+    `Average symptom severity is ${avgSeverity.toFixed(1)}/10`,
+    `Average sleep duration is ${avgSleep.toFixed(1)} hours`,
+    `Most common symptoms: ${commonSymptoms.join(', ') || 'None recorded'}`,
+    severityTrend
+  ];
+
+  // Add lab work insights if available
+  if (labWork.length > 0) {
+    patterns.push(`${labWork.length} lab work entries available for analysis`);
+    const abnormalResults = labWork.flatMap(lab => 
+      lab.tests?.filter((test: any) => test.status && ['abnormal', 'high', 'low', 'critical'].includes(test.status)) || []
+    );
+    if (abnormalResults.length > 0) {
+      patterns.push(`${abnormalResults.length} abnormal lab results require attention`);
+    }
+  }
+
+  // Add medical test insights if available
+  if (medicalTests.length > 0) {
+    patterns.push(`${medicalTests.length} medical test entries available for correlation`);
+  }
+  
   return {
-    patterns: [
-      `Average symptom severity is ${avgSeverity.toFixed(1)}/10`,
-      `Average sleep duration is ${avgSleep.toFixed(1)} hours`,
-      `Most common symptoms: ${commonSymptoms.join(', ') || 'None recorded'}`,
-      severityTrend
-    ],
+    patterns,
     potentialCauses: [
       'Stress and lifestyle factors',
       'Sleep quality and duration',
@@ -281,11 +348,13 @@ function generateFallbackAnalysis(logs: HealthLog[]): HypothesisAnalysis {
       'Monitor for any new or worsening symptoms',
       'Consider lifestyle modifications based on patterns'
     ],
-    disclaimer: "This is a local analysis based on your logged data. For comprehensive medical evaluation, please consult with your healthcare provider. This analysis is for informational purposes only and should not replace professional medical advice."
+    disclaimer: "This is a local analysis based on your logged data. For comprehensive medical evaluation, please consult with your healthcare provider. This analysis is for informational purposes only and should not replace professional medical advice.",
+    labInsights: labWork.length > 0 ? [`${labWork.length} lab work entries included in analysis`] : [],
+    testCorrelations: medicalTests.length > 0 ? [`${medicalTests.length} medical tests included for correlation analysis`] : []
   };
 }
 
-function generateMedicalHypothesesFallback(logs: HealthLog[]): HypothesisAnalysis {
+function generateMedicalHypothesesFallback(logs: HealthLog[], labWork: any[] = [], medicalTests: any[] = []): HypothesisAnalysis {
   console.log('Generating medical hypotheses fallback for', logs.length, 'logs');
   
   if (logs.length === 0) {
@@ -303,13 +372,37 @@ function generateMedicalHypothesesFallback(logs: HealthLog[]): HypothesisAnalysi
   const avgSeverity = logs.reduce((sum, log) => sum + (log.severity || 0), 0) / logs.length;
   const avgSleep = logs.reduce((sum, log) => sum + (log.sleep || 0), 0) / logs.length;
   
+  const patterns = [
+    `Primary symptoms: ${commonSymptoms.join(', ') || 'Various symptoms recorded'}`,
+    `Severity pattern: ${avgSeverity.toFixed(1)}/10 average`,
+    `Sleep correlation: ${avgSleep.toFixed(1)} hours average`,
+    getSeverityTrend(logs)
+  ];
+
+  // Include lab work patterns for medical analysis
+  if (labWork.length > 0) {
+    patterns.push(`Lab work data: ${labWork.length} entries analyzed`);
+    
+    const abnormalResults = labWork.flatMap(lab => 
+      lab.tests?.filter((test: any) => test.status && ['abnormal', 'high', 'low', 'critical'].includes(test.status)) || []
+    );
+    
+    if (abnormalResults.length > 0) {
+      patterns.push(`Key findings: ${abnormalResults.length} abnormal lab values detected`);
+      const criticalResults = abnormalResults.filter((test: any) => test.status === 'critical');
+      if (criticalResults.length > 0) {
+        patterns.push(`⚠️ ${criticalResults.length} critical lab values require immediate medical attention`);
+      }
+    }
+  }
+
+  // Include medical test patterns
+  if (medicalTests.length > 0) {
+    patterns.push(`Medical imaging/tests: ${medicalTests.length} entries for correlation analysis`);
+  }
+  
   return {
-    patterns: [
-      `Primary symptoms: ${commonSymptoms.join(', ') || 'Various symptoms recorded'}`,
-      `Severity pattern: ${avgSeverity.toFixed(1)}/10 average`,
-      `Sleep correlation: ${avgSleep.toFixed(1)} hours average`,
-      getSeverityTrend(logs)
-    ],
+    patterns,
     potentialCauses: [
       'Inflammatory conditions (requires medical evaluation)',
       'Autoimmune disorders (blood work and specialist consultation needed)',
@@ -340,7 +433,9 @@ function generateMedicalHypothesesFallback(logs: HealthLog[]): HypothesisAnalysi
       '📝 Continue detailed symptom tracking until medical consultation',
       '💊 Review all medications with doctor for potential interactions'
     ],
-    disclaimer: "🚨 MEDICAL DISCLAIMER: These are potential medical hypotheses only and require immediate professional medical evaluation. This analysis is NOT a diagnosis and should not replace urgent consultation with qualified healthcare providers. Please discuss all symptoms and potential causes with your doctor, who can order appropriate tests and provide proper medical assessment."
+    disclaimer: "🚨 MEDICAL DISCLAIMER: These are potential medical hypotheses only and require immediate professional medical evaluation. This analysis is NOT a diagnosis and should not replace urgent consultation with qualified healthcare providers. Please discuss all symptoms and potential causes with your doctor, who can order appropriate tests and provide proper medical assessment.",
+    labInsights: labWork.length > 0 ? [`${labWork.length} lab work entries analyzed for medical correlations`] : [],
+    testCorrelations: medicalTests.length > 0 ? [`${medicalTests.length} medical tests analyzed for symptom correlations`] : []
   };
 }
 

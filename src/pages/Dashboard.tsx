@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
 import { useHealthData } from '@/hooks/useHealthData';
+import type { LabWork, MedicalTest } from '@/types/health';
 import { LogDashboard } from '@/components/LogDashboard';
 import { LogForm } from '@/components/LogForm';
 import { AIAnalysisCard } from '@/components/AIAnalysisCard';
@@ -21,12 +22,36 @@ const Dashboard = () => {
   const { healthLogs, loading } = useHealthData();
   const { toast } = useToast();
   
+  const [labWork, setLabWork] = useState<LabWork[]>([]);
+  const [medicalTests, setMedicalTests] = useState<MedicalTest[]>([]);
+  
   const [analysis, setAnalysis] = useState<HypothesisAnalysis | null>(null);
   const [medicalHypotheses, setMedicalHypotheses] = useState<HypothesisAnalysis | null>(null);
   const [redditResults, setRedditResults] = useState<RedditSearchResult | null>(null);
   const [hypothesesRedditResults, setHypothesesRedditResults] = useState<RedditSearchResult | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isGeneratingHypotheses, setIsGeneratingHypotheses] = useState(false);
+
+  // Load lab work and medical tests from localStorage
+  React.useEffect(() => {
+    const savedLabWork = localStorage.getItem('labWork');
+    const savedMedicalTests = localStorage.getItem('medicalTests');
+    
+    if (savedLabWork) {
+      try {
+        setLabWork(JSON.parse(savedLabWork));
+      } catch (error) {
+        console.error('Error parsing saved lab work:', error);
+      }
+    }
+    if (savedMedicalTests) {
+      try {
+        setMedicalTests(JSON.parse(savedMedicalTests));
+      } catch (error) {
+        console.error('Error parsing saved medical tests:', error);
+      }
+    }
+  }, []);
 
   const handleSignOut = async () => {
     const { error } = await signOut();
@@ -53,9 +78,9 @@ const Dashboard = () => {
     setIsAnalyzing(true);
     
     try {
-      // Run AI analysis first
+      // Run AI analysis first with all available data
       console.log('🧠 Starting AI hypothesis generation...');
-      const aiAnalysis = await aiService.generateHypothesis(healthLogs);
+      const aiAnalysis = await aiService.generateHypothesis(healthLogs, labWork, medicalTests);
       console.log('✅ AI analysis completed:', aiAnalysis);
       setAnalysis(aiAnalysis);
       
@@ -65,16 +90,18 @@ const Dashboard = () => {
         const redditSearchResults = await redditSearchService.searchSimilarCases(healthLogs);
         console.log('✅ Reddit search completed:', redditSearchResults);
         setRedditResults(redditSearchResults);
+        const totalDataPoints = healthLogs.length + labWork.length + medicalTests.length;
         toast({
           title: "Analysis Complete",
-          description: `AI analysis complete with ${redditSearchResults.posts.length} similar Reddit cases found.`,
+          description: `AI analysis complete using ${totalDataPoints} data points with ${redditSearchResults.posts.length} similar Reddit cases found.`,
         });
       } catch (redditError) {
         console.warn('Reddit search failed, but AI analysis succeeded:', redditError);
         setRedditResults(null);
+        const totalDataPoints = healthLogs.length + labWork.length + medicalTests.length;
         toast({
           title: "Analysis Complete",
-          description: "AI analysis complete. Reddit search temporarily unavailable.",
+          description: `AI analysis complete using ${totalDataPoints} data points. Reddit search temporarily unavailable.`,
         });
       }
     } catch (error) {
@@ -104,9 +131,9 @@ const Dashboard = () => {
     setIsGeneratingHypotheses(true);
     
     try {
-      // Run medical hypotheses first
+      // Run medical hypotheses first with all available data
       console.log('🧬 Starting medical hypotheses generation...');
-      const medicalAnalysis = await aiService.generateMedicalHypotheses(healthLogs);
+      const medicalAnalysis = await aiService.generateMedicalHypotheses(healthLogs, labWork, medicalTests);
       console.log('✅ Medical hypotheses completed:', medicalAnalysis);
       setMedicalHypotheses(medicalAnalysis);
       
@@ -116,16 +143,18 @@ const Dashboard = () => {
         const redditSearchResults = await redditSearchService.searchSimilarCases(healthLogs);
         console.log('✅ Reddit search for hypotheses completed:', redditSearchResults);
         setHypothesesRedditResults(redditSearchResults);
+        const totalDataPoints = healthLogs.length + labWork.length + medicalTests.length;
         toast({
           title: "Medical Hypotheses Generated",
-          description: `Medical hypotheses complete with ${redditSearchResults.posts.length} similar Reddit cases found. Remember to discuss these with your doctor.`,
+          description: `Medical hypotheses complete using ${totalDataPoints} data points with ${redditSearchResults.posts.length} similar Reddit cases found. Remember to discuss these with your doctor.`,
         });
       } catch (redditError) {
         console.warn('Reddit search failed, but medical hypotheses succeeded:', redditError);
         setHypothesesRedditResults(null);
+        const totalDataPoints = healthLogs.length + labWork.length + medicalTests.length;
         toast({
           title: "Medical Hypotheses Generated",
-          description: "Medical hypotheses complete. Reddit search temporarily unavailable. Remember to discuss these with your doctor.",
+          description: `Medical hypotheses complete using ${totalDataPoints} data points. Reddit search temporarily unavailable. Remember to discuss these with your doctor.`,
         });
       }
     } catch (error) {
@@ -208,8 +237,8 @@ const Dashboard = () => {
                 <CardTitle className="text-lg">Total Logs</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold text-primary">{healthLogs.length}</div>
-                <CardDescription>Health entries recorded</CardDescription>
+                 <div className="text-3xl font-bold text-primary">{healthLogs.length + labWork.length + medicalTests.length}</div>
+                <CardDescription>Total health records</CardDescription>
               </CardContent>
             </Card>
 
@@ -247,7 +276,7 @@ const Dashboard = () => {
                   AI Analysis
                 </CardTitle>
                 <CardDescription>
-                  Get comprehensive AI-powered insights from your health data
+                  Get comprehensive AI-powered insights from your health logs, lab work, and medical tests
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -264,7 +293,7 @@ const Dashboard = () => {
                   ) : (
                     <>
                       <Brain className="mr-2 h-4 w-4" />
-                      Generate AI Analysis ({healthLogs.length} logs)
+                      Generate AI Analysis ({healthLogs.length + labWork.length + medicalTests.length} records)
                     </>
                   )}
                 </Button>
@@ -278,7 +307,7 @@ const Dashboard = () => {
                   Generate Hypotheses
                 </CardTitle>
                 <CardDescription>
-                  Create medical hypotheses based on your symptom patterns
+                  Create medical hypotheses based on your symptom patterns, lab results, and test data
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -295,7 +324,7 @@ const Dashboard = () => {
                   ) : (
                     <>
                       <Brain className="mr-2 h-4 w-4" />
-                      Generate Medical Hypotheses ({healthLogs.length} logs)
+                      Generate Medical Hypotheses ({healthLogs.length + labWork.length + medicalTests.length} records)
                     </>
                   )}
                 </Button>
@@ -350,7 +379,7 @@ const Dashboard = () => {
                 <Brain className="h-12 w-12 text-primary mx-auto mb-4 animate-pulse" />
                 <h3 className="text-lg font-semibold mb-2">Generating General AI Analysis & Searching Reddit</h3>
                 <p className="text-muted-foreground">
-                  AI is analyzing your {healthLogs.length} health logs for general patterns and searching for similar cases on Reddit...
+                  AI is analyzing your {healthLogs.length} health logs, {labWork.length} lab work entries, and {medicalTests.length} medical tests for general patterns and searching for similar cases on Reddit...
                 </p>
               </CardContent>
             </Card>
@@ -363,7 +392,7 @@ const Dashboard = () => {
                 <Brain className="h-12 w-12 text-purple-600 mx-auto mb-4 animate-pulse" />
                 <h3 className="text-lg font-semibold mb-2 text-purple-800">Generating Medical Hypotheses & Searching Reddit</h3>
                 <p className="text-purple-600">
-                  AI is generating medical hypotheses about potential causes from your {healthLogs.length} health logs and searching for similar medical cases on Reddit...
+                  AI is generating medical hypotheses about potential causes from your {healthLogs.length} health logs, {labWork.length} lab work entries, and {medicalTests.length} medical tests and searching for similar medical cases on Reddit...
                 </p>
               </CardContent>
             </Card>

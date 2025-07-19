@@ -1,31 +1,13 @@
-interface HealthLog {
-  id: string;
-  date: string;
-  symptoms: string[];
-  medications: string[];
-  severity: number;
-  mood: string;
-  sleep: number;
-  notes: string;
-}
-
-interface HypothesisAnalysis {
-  patterns: string[];
-  potentialCauses: string[];
-  recommendations: string[];
-  riskFactors: string[];
-  nextSteps: string[];
-  disclaimer: string;
-}
+import type { HealthLog, LabWork, MedicalTest, HypothesisAnalysis } from '@/types/health';
 
 class AIService {
   constructor() {
     // AI analysis now handled securely via Supabase Edge Function
   }
 
-  async generateHypothesis(logs: HealthLog[]): Promise<HypothesisAnalysis> {
+  async generateHypothesis(logs: HealthLog[], labWork: LabWork[] = [], medicalTests: MedicalTest[] = []): Promise<HypothesisAnalysis> {
     try {
-      console.log('Starting AI analysis with logs:', logs.length);
+      console.log('Starting AI analysis with logs:', logs.length, 'lab work:', labWork.length, 'medical tests:', medicalTests.length);
       
       // Call the secure Edge Function instead of OpenAI directly
       const response = await fetch('https://opiuyyiqkmmiffaagqnk.supabase.co/functions/v1/ai-analysis', {
@@ -33,7 +15,7 @@ class AIService {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ logs }),
+        body: JSON.stringify({ logs, labWork, medicalTests }),
       });
 
       if (!response.ok) {
@@ -56,13 +38,13 @@ class AIService {
       
       // If the Edge Function fails, use local fallback analysis
       console.log('Edge function failed, using local fallback analysis');
-      return this.generateFallbackAnalysis(logs);
+      return this.generateFallbackAnalysis(logs, labWork, medicalTests);
     }
   }
 
-  async generateMedicalHypotheses(logs: HealthLog[]): Promise<HypothesisAnalysis> {
+  async generateMedicalHypotheses(logs: HealthLog[], labWork: LabWork[] = [], medicalTests: MedicalTest[] = []): Promise<HypothesisAnalysis> {
     try {
-      console.log('Starting medical hypotheses generation with logs:', logs.length);
+      console.log('Starting medical hypotheses generation with logs:', logs.length, 'lab work:', labWork.length, 'medical tests:', medicalTests.length);
       
       // Call the secure Edge Function with focus on medical causes
       const response = await fetch('https://opiuyyiqkmmiffaagqnk.supabase.co/functions/v1/ai-analysis', {
@@ -72,6 +54,8 @@ class AIService {
         },
         body: JSON.stringify({ 
           logs, 
+          labWork,
+          medicalTests,
           analysisType: 'medical_hypotheses',
           focusOnCauses: true 
         }),
@@ -97,14 +81,14 @@ class AIService {
       
       // If the Edge Function fails, use medical hypotheses fallback
       console.log('Edge function failed, using medical hypotheses fallback analysis');
-      return this.generateMedicalHypothesesFallback(logs);
+      return this.generateMedicalHypothesesFallback(logs, labWork, medicalTests);
     }
   }
 
   // This method is no longer needed as formatting is done in the Edge Function
   // Keeping it for potential future use or local fallback
 
-  private generateFallbackAnalysis(logs: HealthLog[]): HypothesisAnalysis {
+  private generateFallbackAnalysis(logs: HealthLog[], labWork: LabWork[] = [], medicalTests: MedicalTest[] = []): HypothesisAnalysis {
     console.log('Generating fallback analysis based on local data');
     
     const avgSeverity = logs.reduce((sum, log) => sum + log.severity, 0) / logs.length;
@@ -112,13 +96,31 @@ class AIService {
     const commonSymptoms = this.getCommonSymptoms(logs);
     const severityTrend = this.getSeverityTrend(logs);
     
+    const patterns = [
+      `Average symptom severity is ${avgSeverity.toFixed(1)}/10`,
+      `Average sleep duration is ${avgSleep.toFixed(1)} hours`,
+      `Most common symptoms: ${commonSymptoms.join(', ')}`,
+      severityTrend
+    ];
+
+    // Add lab work insights if available
+    if (labWork.length > 0) {
+      patterns.push(`${labWork.length} lab work entries available for analysis`);
+      const abnormalResults = labWork.flatMap(lab => 
+        lab.tests.filter(test => test.status && ['abnormal', 'high', 'low', 'critical'].includes(test.status))
+      );
+      if (abnormalResults.length > 0) {
+        patterns.push(`${abnormalResults.length} abnormal lab results require attention`);
+      }
+    }
+
+    // Add medical test insights if available
+    if (medicalTests.length > 0) {
+      patterns.push(`${medicalTests.length} medical test entries available for correlation`);
+    }
+    
     return {
-      patterns: [
-        `Average symptom severity is ${avgSeverity.toFixed(1)}/10`,
-        `Average sleep duration is ${avgSleep.toFixed(1)} hours`,
-        `Most common symptoms: ${commonSymptoms.join(', ')}`,
-        severityTrend
-      ],
+      patterns,
       potentialCauses: [
         'Stress and lifestyle factors',
         'Sleep quality and duration',
@@ -147,20 +149,44 @@ class AIService {
     };
   }
 
-  private generateMedicalHypothesesFallback(logs: HealthLog[]): HypothesisAnalysis {
+  private generateMedicalHypothesesFallback(logs: HealthLog[], labWork: LabWork[] = [], medicalTests: MedicalTest[] = []): HypothesisAnalysis {
     console.log('Generating medical hypotheses fallback based on local data');
     
     const commonSymptoms = this.getCommonSymptoms(logs);
     const avgSeverity = logs.reduce((sum, log) => sum + log.severity, 0) / logs.length;
     const avgSleep = logs.reduce((sum, log) => sum + log.sleep, 0) / logs.length;
     
+    const patterns = [
+      `Primary symptoms: ${commonSymptoms.join(', ')}`,
+      `Severity pattern: ${avgSeverity.toFixed(1)}/10 average`,
+      `Sleep correlation: ${avgSleep.toFixed(1)} hours average`,
+      this.getSeverityTrend(logs)
+    ];
+
+    // Include lab work patterns for medical analysis
+    if (labWork.length > 0) {
+      patterns.push(`Lab work data: ${labWork.length} entries analyzed`);
+      
+      const abnormalResults = labWork.flatMap(lab => 
+        lab.tests.filter(test => test.status && ['abnormal', 'high', 'low', 'critical'].includes(test.status))
+      );
+      
+      if (abnormalResults.length > 0) {
+        patterns.push(`Key findings: ${abnormalResults.length} abnormal lab values detected`);
+        const criticalResults = abnormalResults.filter(test => test.status === 'critical');
+        if (criticalResults.length > 0) {
+          patterns.push(`⚠️ ${criticalResults.length} critical lab values require immediate medical attention`);
+        }
+      }
+    }
+
+    // Include medical test patterns
+    if (medicalTests.length > 0) {
+      patterns.push(`Medical imaging/tests: ${medicalTests.length} entries for correlation analysis`);
+    }
+    
     return {
-      patterns: [
-        `Primary symptoms: ${commonSymptoms.join(', ')}`,
-        `Severity pattern: ${avgSeverity.toFixed(1)}/10 average`,
-        `Sleep correlation: ${avgSleep.toFixed(1)} hours average`,
-        this.getSeverityTrend(logs)
-      ],
+      patterns,
       potentialCauses: [
         'Inflammatory conditions (discuss with doctor)',
         'Autoimmune disorders (requires medical evaluation)',
@@ -268,4 +294,4 @@ class AIService {
 }
 
 export const aiService = new AIService();
-export type { HypothesisAnalysis, HealthLog }; 
+export type { HypothesisAnalysis, HealthLog, LabWork, MedicalTest };
