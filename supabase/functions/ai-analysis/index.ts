@@ -49,15 +49,21 @@ serve(async (req) => {
     
     if (!openAIApiKey) {
       console.log('OpenAI API key not found, using fallback analysis');
-      return new Response(JSON.stringify(generateFallbackAnalysis(logs, labWork, medicalTests)), {
+      const fallbackAnalysis = (analysisType === 'medical_hypotheses' || focusOnCauses) 
+        ? generateMedicalHypothesesFallback(logs, labWork, medicalTests)
+        : generateFallbackAnalysis(logs, labWork, medicalTests);
+      return new Response(JSON.stringify(fallbackAnalysis), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    // Validate API key format
+    // Validate API key format (supports both sk- and sk-proj- formats)
     if (!openAIApiKey.startsWith('sk-')) {
       console.log('Invalid API key format, using fallback analysis');
-      return new Response(JSON.stringify(generateFallbackAnalysis(logs, labWork, medicalTests)), {
+      const fallbackAnalysis = (analysisType === 'medical_hypotheses' || focusOnCauses) 
+        ? generateMedicalHypothesesFallback(logs, labWork, medicalTests)
+        : generateFallbackAnalysis(logs, labWork, medicalTests);
+      return new Response(JSON.stringify(fallbackAnalysis), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
@@ -190,7 +196,10 @@ Be specific but cautious. If you see concerning patterns, emphasize the need for
       
       if (response.status === 401 || response.status === 403) {
         console.log('API authentication error, using fallback analysis');
-        return new Response(JSON.stringify(generateFallbackAnalysis(logs, labWork, medicalTests)), {
+        const fallbackAnalysis = (analysisType === 'medical_hypotheses' || focusOnCauses) 
+          ? generateMedicalHypothesesFallback(logs, labWork, medicalTests)
+          : generateFallbackAnalysis(logs, labWork, medicalTests);
+        return new Response(JSON.stringify(fallbackAnalysis), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
@@ -216,7 +225,7 @@ Be specific but cautious. If you see concerning patterns, emphasize the need for
       });
     } catch (parseError) {
       console.log('JSON parsing failed, using text parsing fallback');
-      const analysis = parseTextResponse(content);
+      const analysis = parseTextResponse(content, analysisType);
       return new Response(JSON.stringify(analysis), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -508,7 +517,7 @@ function getSeverityTrend(logs: HealthLog[]): string {
   return 'Symptoms appear to be stable over time';
 }
 
-function parseTextResponse(content: string): HypothesisAnalysis {
+function parseTextResponse(content: string, analysisType?: string): HypothesisAnalysis {
   const lines = content.split('\n').filter(line => line.trim());
   
   const patterns: string[] = [];
@@ -539,6 +548,29 @@ function parseTextResponse(content: string): HypothesisAnalysis {
       }
     }
   });
+
+  // If no patterns were found, return differentiated fallback based on analysis type
+  if (patterns.length === 0) {
+    if (analysisType === 'medical_hypotheses') {
+      return {
+        patterns: ['🔍 Root Cause Analysis: No clear patterns identified yet'],
+        potentialCauses: ['🚨 Continue tracking to identify potential root causes'],
+        recommendations: ['🚨 CRITICAL: Continue logging for better medical pattern recognition'],
+        riskFactors: ['🚨 Monitor for any concerning medical changes'],
+        nextSteps: ['🏥 Continue tracking symptoms and consult healthcare provider if concerned'],
+        disclaimer: "🚨 MEDICAL DISCLAIMER: This analysis is for informational purposes only and should not replace professional medical advice. Please consult with your healthcare provider about any concerns."
+      };
+    } else {
+      return {
+        patterns: ['📊 General Health Analysis: No clear patterns identified yet'],
+        potentialCauses: ['🌱 Continue tracking to identify potential lifestyle causes'],
+        recommendations: ['📝 Continue logging for better general health pattern recognition'],
+        riskFactors: ['⚠️ Monitor for any concerning health changes'],
+        nextSteps: ['🏥 Continue tracking symptoms and consult healthcare provider if concerned'],
+        disclaimer: "This analysis is for informational purposes only and should not replace professional medical advice. Please consult with your healthcare provider about any concerns."
+      };
+    }
+  }
 
   return {
     patterns: patterns.length > 0 ? patterns : ['No clear patterns identified yet'],
