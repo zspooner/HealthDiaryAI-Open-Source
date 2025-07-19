@@ -49,16 +49,21 @@ const Dashboard = () => {
       return;
     }
 
+    console.log('🚀 Starting AI Analysis - setting loading to true');
     setIsAnalyzing(true);
     
     try {
       // Run AI analysis first
+      console.log('🧠 Starting AI hypothesis generation...');
       const aiAnalysis = await aiService.generateHypothesis(healthLogs);
+      console.log('✅ AI analysis completed:', aiAnalysis);
       setAnalysis(aiAnalysis);
       
       // Try Reddit search separately, don't let it fail the main analysis
       try {
+        console.log('🔍 Starting Reddit search...');
         const redditSearchResults = await redditSearchService.searchSimilarCases(healthLogs);
+        console.log('✅ Reddit search completed:', redditSearchResults);
         setRedditResults(redditSearchResults);
         toast({
           title: "Analysis Complete",
@@ -73,13 +78,14 @@ const Dashboard = () => {
         });
       }
     } catch (error) {
-      console.error('AI Analysis failed:', error);
+      console.error('❌ AI Analysis failed:', error);
       toast({
         title: "Analysis Failed",
         description: "Failed to generate AI analysis. Please try again.",
         variant: "destructive",
       });
     } finally {
+      console.log('🏁 AI Analysis finished - setting loading to false');
       setIsAnalyzing(false);
     }
   };
@@ -94,16 +100,21 @@ const Dashboard = () => {
       return;
     }
 
+    console.log('🚀 Starting Medical Hypotheses - setting loading to true');
     setIsGeneratingHypotheses(true);
     
     try {
       // Run medical hypotheses first
+      console.log('🧬 Starting medical hypotheses generation...');
       const medicalAnalysis = await aiService.generateMedicalHypotheses(healthLogs);
+      console.log('✅ Medical hypotheses completed:', medicalAnalysis);
       setMedicalHypotheses(medicalAnalysis);
       
       // Try Reddit search separately, don't let it fail the main analysis
       try {
+        console.log('🔍 Starting Reddit search for hypotheses...');
         const redditSearchResults = await redditSearchService.searchSimilarCases(healthLogs);
+        console.log('✅ Reddit search for hypotheses completed:', redditSearchResults);
         setHypothesesRedditResults(redditSearchResults);
         toast({
           title: "Medical Hypotheses Generated",
@@ -118,13 +129,14 @@ const Dashboard = () => {
         });
       }
     } catch (error) {
-      console.error('Medical Hypotheses failed:', error);
+      console.error('❌ Medical Hypotheses failed:', error);
       toast({
         title: "Analysis Failed",
         description: "Failed to generate medical hypotheses. Please try again.",
         variant: "destructive",
       });
     } finally {
+      console.log('🏁 Medical Hypotheses finished - setting loading to false');
       setIsGeneratingHypotheses(false);
     }
   };
