@@ -1,0 +1,7 @@
+-- Enable RLS on all tables that are missing it
+ALTER TABLE public.health_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.hypotheses ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.lab_tests ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.lab_work ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.medical_tests ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
