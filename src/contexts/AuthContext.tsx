@@ -47,18 +47,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setLoading(false);
     });
 
-    // Check for guest mode in localStorage
+    // Check for guest mode in localStorage but don't auto-enable
     const guestMode = localStorage.getItem('isGuestMode');
-    if (guestMode === 'true') {
+    if (guestMode === 'true' && !session?.user) {
       setIsGuest(true);
       setLoading(false);
-    } else {
-      // Auto-enable guest mode if no user is authenticated and we're on dashboard
-      if (window.location.pathname === '/dashboard' && !session?.user) {
-        localStorage.setItem('isGuestMode', 'true');
-        setIsGuest(true);
-        setLoading(false);
-      }
     }
 
     return () => subscription.unsubscribe();
@@ -99,7 +92,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signInAsGuest = async () => {
     setLoading(true);
     
-    // Set guest mode in localStorage
+    // Clear any existing guest data from localStorage and set guest mode
+    localStorage.removeItem('healthLogs');
+    localStorage.removeItem('hypotheses');
     localStorage.setItem('isGuestMode', 'true');
     setIsGuest(true);
     
