@@ -11,7 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 
 const Auth = () => {
-  const { user, signIn, signUp, signInAsGuest, loading, isGuest } = useAuth();
+  const { user, signIn, signUp, loading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   
@@ -26,10 +26,10 @@ const Auth = () => {
 
   // Redirect if already authenticated
   useEffect(() => {
-    if ((user || isGuest) && !loading) {
+    if (user && !loading) {
       navigate('/dashboard');
     }
-  }, [user, isGuest, loading, navigate]);
+  }, [user, loading, navigate]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -110,27 +110,6 @@ const Auth = () => {
     setIsSubmitting(false);
   };
 
-  const handleGuestSignIn = async () => {
-    setIsSubmitting(true);
-    
-    const { error } = await signInAsGuest();
-    
-    if (error) {
-      toast({
-        title: "Error",
-        description: "Something went wrong. Please try again.",
-        variant: "destructive",
-      });
-    } else {
-      toast({
-        title: "Welcome, Guest!",
-        description: "You're browsing as a guest. Your data won't be saved.",
-        variant: "default",
-      });
-    }
-    
-    setIsSubmitting(false);
-  };
 
   if (loading) {
     return (
@@ -144,7 +123,7 @@ const Auth = () => {
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold">Medical Tracker</CardTitle>
+          <CardTitle className="text-2xl font-bold">HealthDiaryAI</CardTitle>
           <CardDescription>
             Sign in to your account or create a new one
           </CardDescription>
@@ -237,33 +216,8 @@ const Auth = () => {
                     'Sign In'
                   )}
                  </Button>
-               </form>
-               
-               <div className="mt-6 pt-6 border-t border-border">
-                 <div className="space-y-3">
-                   <Alert>
-                     <AlertDescription className="text-sm">
-                       <strong>Just browsing?</strong> Continue as a guest, but note that your data won't be saved.
-                     </AlertDescription>
-                   </Alert>
-                   <Button 
-                     variant="outline" 
-                     onClick={handleGuestSignIn}
-                     disabled={isSubmitting}
-                     className="w-full"
-                   >
-                     {isSubmitting ? (
-                       <>
-                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                         Signing in as guest...
-                       </>
-                     ) : (
-                       'Continue as Guest'
-                     )}
-                   </Button>
-                 </div>
-               </div>
-             </TabsContent>
+                </form>
+              </TabsContent>
              
              <TabsContent value="signup">
               <form onSubmit={handleSignUp} className="space-y-4">

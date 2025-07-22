@@ -55,14 +55,6 @@ const Index = () => {
             >
               Sign In
             </Button>
-            <Button 
-              onClick={() => navigate('/dashboard')} 
-              variant="secondary" 
-              size="lg"
-              className="text-lg px-8 py-3"
-            >
-              Try as Guest
-            </Button>
           </div>
         </div>
 

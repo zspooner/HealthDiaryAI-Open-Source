@@ -8,14 +8,14 @@ interface ProtectedRouteProps {
 }
 
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-  const { user, isGuest, loading } = useAuth();
+  const { user, loading } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!loading && !user && !isGuest) {
+    if (!loading && !user) {
       navigate('/auth');
     }
-  }, [user, isGuest, loading, navigate]);
+  }, [user, loading, navigate]);
 
   if (loading) {
     return (
@@ -25,7 +25,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     );
   }
 
-  if (!user && !isGuest) {
+  if (!user) {
     return null;
   }
 

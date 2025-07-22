@@ -25,7 +25,7 @@ export interface Hypothesis {
 }
 
 export const useHealthData = () => {
-  const { user, session, isGuest } = useAuth();
+  const { user, session } = useAuth();
   const { toast } = useToast();
   
   const [healthLogs, setHealthLogs] = useState<HealthLog[]>([]);
@@ -133,20 +133,12 @@ export const useHealthData = () => {
     }
   };
 
-  // Load health data from Supabase or initialize empty for guests
+  // Load health data from Supabase for authenticated users only
   const loadHealthData = async () => {
     setLoading(true);
     
     try {
-      // Guest mode: no data persistence - start fresh every session
-      if (isGuest) {
-        setHealthLogs([]);
-        setHypotheses([]);
-        setLoading(false);
-        return;
-      }
-
-      // Authenticated user: load from database
+      // Only load data for authenticated users
       if (!user?.id) {
         setHealthLogs([]);
         setHypotheses([]);
@@ -154,7 +146,7 @@ export const useHealthData = () => {
         return;
       }
 
-      // Load health logs for authenticated users only
+      // Load health logs for authenticated users
       const { data: logsData, error: logsError } = await supabase
         .from('health_logs')
         .select('*')
@@ -182,7 +174,7 @@ export const useHealthData = () => {
 
       setHealthLogs(formattedLogs);
 
-      // Load hypotheses for authenticated users only
+      // Load hypotheses for authenticated users
       const { data: hypsData, error: hypsError } = await supabase
         .from('hypotheses')
         .select('*')
@@ -205,31 +197,14 @@ export const useHealthData = () => {
     }
   };
 
-  // Save health log - in memory for guests, database for authenticated users
+  // Save health log to database for authenticated users only
   const saveHealthLog = async (log: Omit<HealthLog, 'id'>) => {
     try {
-      // Guest mode: store only in memory (no database persistence)
-      if (isGuest) {
-        const newLog: HealthLog = {
-          id: `guest-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-          ...log
-        };
-
-        setHealthLogs(prev => [newLog, ...prev]);
-
-        toast({
-          title: "Health Log Added",
-          description: "Your health log has been added to this session (not saved permanently).",
-        });
-
-        return newLog;
-      }
-
-      // Authenticated user: save to database
+      // Only authenticated users can save data
       if (!user?.id) {
         toast({
           title: "Authentication Required",
-          description: "Please sign in to save your health data permanently.",
+          description: "Please sign in to save your health data.",
           variant: "destructive",
         });
         return null;
@@ -278,32 +253,14 @@ export const useHealthData = () => {
     }
   };
 
-  // Save hypothesis - in memory for guests, database for authenticated users
+  // Save hypothesis to database for authenticated users only
   const saveHypothesis = async (hypothesis: Omit<Hypothesis, 'id' | 'created_at'>) => {
     try {
-      // Guest mode: store only in memory (no database persistence)
-      if (isGuest) {
-        const newHypothesis: Hypothesis = {
-          id: `guest-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-          created_at: new Date().toISOString(),
-          ...hypothesis
-        };
-
-        setHypotheses(prev => [newHypothesis, ...prev]);
-
-        toast({
-          title: "Hypothesis Added",
-          description: "Your hypothesis has been added to this session (not saved permanently).",
-        });
-
-        return newHypothesis;
-      }
-
-      // Authenticated user: save to database
+      // Only authenticated users can save data
       if (!user?.id) {
         toast({
           title: "Authentication Required",
-          description: "Please sign in to save your health data permanently.",
+          description: "Please sign in to save your health data.",
           variant: "destructive",
         });
         return null;
@@ -341,20 +298,10 @@ export const useHealthData = () => {
     }
   };
 
-  // Delete health log - only for authenticated users
+  // Delete health log for authenticated users only
   const deleteHealthLog = async (id: string) => {
     try {
-      // Guest mode: only remove from memory
-      if (isGuest) {
-        setHealthLogs(prev => prev.filter(log => log.id !== id));
-        toast({
-          title: "Log Removed",
-          description: "Health log has been removed from this session.",
-        });
-        return;
-      }
-
-      // Authenticated user: delete from database
+      // Only authenticated users can delete data
       if (!user?.id) {
         toast({
           title: "Authentication Required",
@@ -395,10 +342,12 @@ export const useHealthData = () => {
         loadHealthData();
       });
     } else {
-      // Guest mode or not authenticated - load appropriate data
-      loadHealthData();
+      // Not authenticated - clear data
+      setHealthLogs([]);
+      setHypotheses([]);
+      setLoading(false);
     }
-  }, [user, session, isGuest]);
+  }, [user, session]);
 
   return {
     healthLogs,

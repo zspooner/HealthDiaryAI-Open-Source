@@ -18,7 +18,7 @@ interface LogFormProps {
 export function LogForm({ onLogAdded }: LogFormProps) {
   const { toast } = useToast();
   const { saveHealthLog } = useHealthData();
-  const { user, isGuest } = useAuth();
+  const { user } = useAuth();
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [symptoms, setSymptoms] = useState<string[]>([]);
