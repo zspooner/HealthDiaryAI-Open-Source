@@ -92,13 +92,9 @@ const Dashboard = () => {
       // Run appropriate AI analysis based on data amount
       console.log('🧠 Starting AI analysis...');
       let aiAnalysis;
-      if (isSingleLog) {
-        aiAnalysis = await aiService.generateSingleLogAnalysis(healthLogs, labWork, medicalTests);
-        console.log('✅ Single log AI analysis completed:', aiAnalysis);
-      } else {
-        aiAnalysis = await aiService.generateGeneralAnalysis(healthLogs, labWork, medicalTests);
-        console.log('✅ General AI analysis completed:', aiAnalysis);
-      }
+      // Use general analysis for both single and multiple logs
+      aiAnalysis = await aiService.generateGeneralAnalysis(healthLogs, labWork, medicalTests);
+      console.log('✅ AI analysis completed:', aiAnalysis);
       setAnalysis(aiAnalysis);
       
       // Try Reddit search separately, don't let it fail the main analysis
@@ -160,13 +156,9 @@ const Dashboard = () => {
       // Run medical hypotheses with appropriate analysis type
       console.log('🧬 Starting medical hypotheses generation...');
       let medicalAnalysis;
-      if (isSingleLog) {
-        medicalAnalysis = await aiService.generateSingleLogAnalysis(healthLogs, labWork, medicalTests);
-        console.log('✅ Single log medical analysis completed:', medicalAnalysis);
-      } else {
-        medicalAnalysis = await aiService.generateMedicalHypotheses(healthLogs, labWork, medicalTests);
-        console.log('✅ Medical hypotheses completed:', medicalAnalysis);
-      }
+      // Use medical hypotheses for both single and multiple logs
+      medicalAnalysis = await aiService.generateMedicalHypotheses(healthLogs, labWork, medicalTests);
+      console.log('✅ Medical hypotheses completed:', medicalAnalysis);
       setMedicalHypotheses(medicalAnalysis);
       
       // Try Reddit search separately, don't let it fail the main analysis
@@ -225,13 +217,13 @@ const Dashboard = () => {
                   Health Dashboard
                 </h1>
                 <p className="text-primary-foreground/80">
-                  Welcome back, {user?.email}
+                  {user ? `Welcome back, ${user.email}` : 'Welcome, Guest User'}
                 </p>
               </div>
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2 bg-white/20 rounded-lg px-3 py-2">
                   <User className="h-4 w-4" />
-                  <span className="text-sm">{user?.email}</span>
+                  <span className="text-sm">{user?.email || 'Guest User'}</span>
                 </div>
                 <Button
                   onClick={handleSignOut}

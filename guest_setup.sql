@@ -1,0 +1,4 @@
+ALTER TABLE public.health_logs DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.hypotheses DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.health_logs ALTER COLUMN user_id DROP NOT NULL;
+ALTER TABLE public.hypotheses ALTER COLUMN user_id DROP NOT NULL;

@@ -52,6 +52,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (guestMode === 'true') {
       setIsGuest(true);
       setLoading(false);
+    } else {
+      // Auto-enable guest mode if no user is authenticated and we're on dashboard
+      if (window.location.pathname === '/dashboard' && !session?.user) {
+        localStorage.setItem('isGuestMode', 'true');
+        setIsGuest(true);
+        setLoading(false);
+      }
     }
 
     return () => subscription.unsubscribe();

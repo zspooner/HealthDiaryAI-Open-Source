@@ -135,17 +135,25 @@ export const useHealthData = () => {
 
   // Load health data from Supabase
   const loadHealthData = async () => {
-    if (!user || !session) return;
+    // Allow guest users to load data (no user check)
 
     setLoading(true);
     
     try {
       // Load health logs
-      const { data: logsData, error: logsError } = await supabase
+      let query = supabase
         .from('health_logs')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+        .select('*');
+      
+      if (user?.id) {
+        // User is logged in - get their data and guest data
+        query = query.or(`user_id.eq.${user.id},user_id.is.null`);
+      } else {
+        // Guest mode - only get guest data (null user_id)
+        query = query.is('user_id', null);
+      }
+      
+      const { data: logsData, error: logsError } = await query.order('created_at', { ascending: false });
 
       if (logsError) throw logsError;
 
@@ -169,11 +177,19 @@ export const useHealthData = () => {
       setHealthLogs(formattedLogs);
 
       // Load hypotheses
-      const { data: hypsData, error: hypsError } = await supabase
+      let hypsQuery = supabase
         .from('hypotheses')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+        .select('*');
+      
+      if (user?.id) {
+        // User is logged in - get their data and guest data
+        hypsQuery = hypsQuery.or(`user_id.eq.${user.id},user_id.is.null`);
+      } else {
+        // Guest mode - only get guest data (null user_id)
+        hypsQuery = hypsQuery.is('user_id', null);
+      }
+      
+      const { data: hypsData, error: hypsError } = await hypsQuery.order('created_at', { ascending: false });
 
       if (hypsError) throw hypsError;
 
@@ -193,11 +209,11 @@ export const useHealthData = () => {
 
   // Save health log to Supabase
   const saveHealthLog = async (log: Omit<HealthLog, 'id'>) => {
-    if (!user) return;
+    // Allow guest users (no user check)
 
     try {
       const supabaseLog = {
-        user_id: user.id,
+        user_id: user?.id || null, // Allow null for guest users
         notes: log.notes,
         symptoms: log.symptoms.join(', '),
         meds: log.medications.join(', '),
@@ -241,11 +257,11 @@ export const useHealthData = () => {
 
   // Save hypothesis to Supabase
   const saveHypothesis = async (hypothesis: Omit<Hypothesis, 'id' | 'created_at'>) => {
-    if (!user) return;
+    // Allow guest users (no user check)
 
     try {
       const supabaseHypothesis = {
-        user_id: user.id,
+        user_id: user?.id || null, // Allow null for guest users
         ...hypothesis
       };
 
@@ -278,14 +294,23 @@ export const useHealthData = () => {
 
   // Delete health log
   const deleteHealthLog = async (id: string) => {
-    if (!user) return;
+    // Allow guest users to delete their logs
 
     try {
-      const { error } = await supabase
+      let query = supabase
         .from('health_logs')
         .delete()
-        .eq('id', id)
-        .eq('user_id', user.id);
+        .eq('id', id);
+      
+      if (user?.id) {
+        // User is logged in - ensure they can only delete their own logs
+        query = query.eq('user_id', user.id);
+      } else {
+        // Guest mode - can only delete guest logs (null user_id)
+        query = query.is('user_id', null);
+      }
+      
+      const { error } = await query;
 
       if (error) throw error;
 
@@ -313,10 +338,8 @@ export const useHealthData = () => {
         loadHealthData();
       });
     } else {
-      // User not logged in, clear state
-      setHealthLogs([]);
-      setHypotheses([]);
-      setLoading(false);
+      // Guest mode or not logged in - load guest data
+      loadHealthData();
     }
   }, [user, session]);
 
