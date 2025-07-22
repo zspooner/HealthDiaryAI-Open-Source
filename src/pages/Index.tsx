@@ -9,6 +9,8 @@ const Index = () => {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
 
+  console.log('Index page loading:', { user, loading });
+
   useEffect(() => {
     if (user && !loading) {
       navigate('/dashboard');
@@ -30,7 +32,7 @@ const Index = () => {
           <div className="flex items-center justify-center gap-3 mb-6">
             <Activity className="h-12 w-12 text-primary" />
             <h1 className="text-5xl font-bold text-gray-900 dark:text-white">
-              Medical Tracker
+              HealthDiaryAI
             </h1>
           </div>
           <p className="text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-3xl mx-auto">
