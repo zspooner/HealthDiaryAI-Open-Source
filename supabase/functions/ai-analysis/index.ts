@@ -85,7 +85,39 @@ serve(async (req) => {
     // Different prompts based on analysis type
     let prompt: string;
     
-    if (analysisType === 'medical_hypotheses' || focusOnCauses) {
+    if (analysisType === 'single_log_analysis') {
+      prompt = `You are a medical AI assistant analyzing a SINGLE health log entry to provide immediate insights and preliminary observations.
+
+CRITICAL: You are analyzing just ONE log entry, so your insights will be limited. This is for immediate feedback, not comprehensive analysis.
+
+IMPORTANT: You are NOT providing medical diagnosis or treatment. You are providing preliminary observations that should be discussed with healthcare professionals.
+
+The user is asking: "Analyze this single health log and give me immediate insights."
+
+Analyze the following SINGLE health log and provide preliminary insights in this exact JSON format:
+
+{
+  "patterns": ["immediate observation 1", "single log pattern 2", "preliminary insight 3"],
+  "potentialCauses": ["possible factor 1", "potential trigger 2", "preliminary cause 3"],
+  "recommendations": ["immediate action 1", "preliminary recommendation 2", "next step 3"],
+  "riskFactors": ["preliminary risk 1", "concern to monitor 2"],
+  "nextSteps": ["immediate next step 1", "monitoring action 2", "preparation step 3"],
+  "disclaimer": "SINGLE LOG ANALYSIS: This analysis is based on just one health log entry. For more accurate insights, consider logging 7+ entries over time. This analysis is for informational purposes only and should not replace professional medical advice."
+}
+
+Single Health Log Data:
+${dataSummary}
+
+Provide preliminary insights focusing on:
+- Immediate observations from this single log entry
+- Potential factors that could be contributing to the symptoms
+- Preliminary recommendations based on the available data
+- Any concerning patterns that warrant attention
+- Immediate next steps for the user
+- What additional data would be helpful to collect
+
+Think like a medical assistant doing a quick review - provide immediate, preliminary insights while emphasizing the limitations of single-log analysis. Be encouraging about continuing to log data for better insights. If you see concerning patterns, emphasize the need for professional evaluation.`;
+    } else if (analysisType === 'medical_hypotheses' || focusOnCauses) {
       prompt = `You are a medical AI assistant analyzing health data to identify the ROOT CAUSE of symptoms. 
 
 CRITICAL: You are NOT diagnosing or providing medical treatment. You are generating educated hypotheses about the UNDERLYING CAUSES that require professional medical evaluation.
@@ -97,10 +129,10 @@ Analyze the following health logs and provide root cause hypotheses in this exac
 {
   "patterns": ["key symptom pattern 1", "key symptom pattern 2", "key symptom pattern 3"],
   "potentialCauses": ["Specific medical condition that could be the root cause (requires doctor evaluation)", "Another potential root cause (needs medical testing)", "Additional root cause possibility (discuss with physician)"],
-  "recommendations": ["🚨 CRITICAL: These hypotheses require immediate medical evaluation", "Request comprehensive diagnostic workup from your doctor", "Consider specific medical tests to confirm or rule out these causes"],
+  "recommendations": ["CRITICAL: These hypotheses require immediate medical evaluation", "Request comprehensive diagnostic workup from your doctor", "Consider specific medical tests to confirm or rule out these causes"],
   "riskFactors": ["Medical risk factor that supports this hypothesis", "Additional risk factor that increases likelihood"],
-  "nextSteps": ["🏥 URGENT: Schedule appointment with healthcare provider", "📋 Prepare detailed symptom timeline for doctor", "🔬 Request specific diagnostic tests based on these hypotheses", "📊 Bring all lab work and test results to appointment"],
-  "disclaimer": "🚨 MEDICAL DISCLAIMER: These are educated hypotheses about potential ROOT CAUSES only and require immediate professional medical evaluation. This analysis is NOT a diagnosis and should not replace consultation with qualified healthcare providers. These hypotheses are meant to guide your discussion with your doctor, who can order appropriate tests and provide proper medical assessment."
+  "nextSteps": ["URGENT: Schedule appointment with healthcare provider", "Prepare detailed symptom timeline for doctor", "Request specific diagnostic tests based on these hypotheses", "Bring all lab work and test results to appointment"],
+  "disclaimer": "MEDICAL DISCLAIMER: These are educated hypotheses about potential ROOT CAUSES only and require immediate professional medical evaluation. This analysis is NOT a diagnosis and should not replace consultation with qualified healthcare providers. These hypotheses are meant to guide your discussion with your doctor, who can order appropriate tests and provide proper medical assessment."
 }
 
 Comprehensive Health Data:
@@ -417,10 +449,10 @@ function generateMedicalHypothesesFallback(logs: HealthLog[], labWork: any[] = [
     return {
       patterns: ['No health logs available for medical analysis'],
       potentialCauses: ['Insufficient data to generate medical hypotheses'],
-      recommendations: ['🚨 Start logging symptoms and consult with healthcare provider'],
+      recommendations: ['Start logging symptoms and consult with healthcare provider'],
       riskFactors: [],
-      nextSteps: ['🏥 Schedule medical consultation for proper evaluation'],
-      disclaimer: "🚨 MEDICAL DISCLAIMER: No symptoms to analyze. Please consult with your healthcare provider for proper medical evaluation."
+      nextSteps: ['Schedule medical consultation for proper evaluation'],
+      disclaimer: "MEDICAL DISCLAIMER: No symptoms to analyze. Please consult with your healthcare provider for proper medical evaluation."
     };
   }
   
@@ -447,7 +479,7 @@ function generateMedicalHypothesesFallback(logs: HealthLog[], labWork: any[] = [
       patterns.push(`Key findings: ${abnormalResults.length} abnormal lab values detected`);
       const criticalResults = abnormalResults.filter((test: any) => test.status === 'critical');
       if (criticalResults.length > 0) {
-        patterns.push(`⚠️ ${criticalResults.length} critical lab values require immediate medical attention`);
+        patterns.push(`${criticalResults.length} critical lab values require immediate medical attention`);
       }
     }
   }
@@ -470,7 +502,7 @@ function generateMedicalHypothesesFallback(logs: HealthLog[], labWork: any[] = [
       'Environmental or infectious triggers (specialist evaluation)'
     ],
     recommendations: [
-      '🚨 IMPORTANT: Discuss these hypotheses with your doctor immediately',
+      'IMPORTANT: Discuss these hypotheses with your doctor immediately',
       'Request comprehensive blood work and physical examination',
       'Consider specialist referrals as recommended by physician',
       'Prepare detailed symptom timeline for medical consultation',
@@ -483,13 +515,13 @@ function generateMedicalHypothesesFallback(logs: HealthLog[], labWork: any[] = [
       'Need for proper diagnostic workup and testing'
     ],
     nextSteps: [
-      '🏥 Schedule urgent appointment with healthcare provider',
-      '📋 Prepare comprehensive list of symptoms for doctor visit',
-      '🔬 Request appropriate diagnostic tests as recommended',
-      '📝 Continue detailed symptom tracking until medical consultation',
-      '💊 Review all medications with doctor for potential interactions'
+      'Schedule urgent appointment with healthcare provider',
+      'Prepare comprehensive list of symptoms for doctor visit',
+      'Request appropriate diagnostic tests as recommended',
+      'Continue detailed symptom tracking until medical consultation',
+      'Review all medications with doctor for potential interactions'
     ],
-    disclaimer: "🚨 MEDICAL DISCLAIMER: These are potential medical hypotheses only and require immediate professional medical evaluation. This analysis is NOT a diagnosis and should not replace urgent consultation with qualified healthcare providers. Please discuss all symptoms and potential causes with your doctor, who can order appropriate tests and provide proper medical assessment.",
+    disclaimer: "MEDICAL DISCLAIMER: These are potential medical hypotheses only and require immediate professional medical evaluation. This analysis is NOT a diagnosis and should not replace urgent consultation with qualified healthcare providers. Please discuss all symptoms and potential causes with your doctor, who can order appropriate tests and provide proper medical assessment.",
     labInsights: labWork.length > 0 ? [`${labWork.length} lab work entries analyzed for medical correlations`] : [],
     testCorrelations: medicalTests.length > 0 ? [`${medicalTests.length} medical tests analyzed for symptom correlations`] : []
   };
@@ -565,20 +597,20 @@ function parseTextResponse(content: string, analysisType?: string): HypothesisAn
   if (patterns.length === 0) {
     if (analysisType === 'medical_hypotheses') {
       return {
-        patterns: ['🔍 Root Cause Analysis: No clear patterns identified yet'],
-        potentialCauses: ['🚨 Continue tracking to identify potential root causes'],
-        recommendations: ['🚨 CRITICAL: Continue logging for better medical pattern recognition'],
-        riskFactors: ['🚨 Monitor for any concerning medical changes'],
-        nextSteps: ['🏥 Continue tracking symptoms and consult healthcare provider if concerned'],
-        disclaimer: "🚨 MEDICAL DISCLAIMER: This analysis is for informational purposes only and should not replace professional medical advice. Please consult with your healthcare provider about any concerns."
+              patterns: ['Root Cause Analysis: No clear patterns identified yet'],
+      potentialCauses: ['Continue tracking to identify potential root causes'],
+      recommendations: ['CRITICAL: Continue logging for better medical pattern recognition'],
+      riskFactors: ['Monitor for any concerning medical changes'],
+      nextSteps: ['Continue tracking symptoms and consult healthcare provider if concerned'],
+      disclaimer: "MEDICAL DISCLAIMER: This analysis is for informational purposes only and should not replace professional medical advice. Please consult with your healthcare provider about any concerns."
       };
     } else {
       return {
-        patterns: ['📊 General Health Analysis: No clear patterns identified yet'],
-        potentialCauses: ['🌱 Continue tracking to identify potential lifestyle causes'],
-        recommendations: ['📝 Continue logging for better general health pattern recognition'],
-        riskFactors: ['⚠️ Monitor for any concerning health changes'],
-        nextSteps: ['🏥 Continue tracking symptoms and consult healthcare provider if concerned'],
+        patterns: ['General Health Analysis: No clear patterns identified yet'],
+        potentialCauses: ['Continue tracking to identify potential lifestyle causes'],
+        recommendations: ['Continue logging for better general health pattern recognition'],
+        riskFactors: ['Monitor for any concerning health changes'],
+        nextSteps: ['Continue tracking symptoms and consult healthcare provider if concerned'],
         disclaimer: "This analysis is for informational purposes only and should not replace professional medical advice. Please consult with your healthcare provider about any concerns."
       };
     }

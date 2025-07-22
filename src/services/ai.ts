@@ -133,30 +133,30 @@ class AIService {
     return {
       patterns,
       potentialCauses: [
-        '🌱 Lifestyle factors affecting your overall wellness',
-        '😴 Sleep quality and circadian rhythm patterns',
-        '🥗 Diet and nutrition impact on daily health',
-        '🏃‍♂️ Physical activity and exercise correlation',
-        '🧘‍♀️ Stress management and mental wellness factors'
+        'Lifestyle factors affecting your overall wellness',
+        'Sleep quality and circadian rhythm patterns',
+        'Diet and nutrition impact on daily health',
+        'Physical activity and exercise correlation',
+        'Stress management and mental wellness factors'
       ],
       recommendations: [
-        '📝 Continue daily health logging for better pattern recognition',
-        '😴 Focus on improving sleep quality and consistency',
-        '🥗 Monitor dietary patterns and their impact on symptoms',
-        '🧘‍♀️ Practice stress management techniques',
-        '🏃‍♂️ Consider gentle exercise and movement routines'
+        'Continue daily health logging for better pattern recognition',
+        'Focus on improving sleep quality and consistency',
+        'Monitor dietary patterns and their impact on symptoms',
+        'Practice stress management techniques',
+        'Consider gentle exercise and movement routines'
       ],
       riskFactors: avgSeverity > 7 ? [
-        '⚠️ High symptom severity suggests need for lifestyle adjustments',
-        '😴 Poor sleep quality may be affecting overall wellness'
+        'High symptom severity suggests need for lifestyle adjustments',
+        'Poor sleep quality may be affecting overall wellness'
       ] : [
-        '📊 Moderate symptom levels - good opportunity for preventive health'
+        'Moderate symptom levels - good opportunity for preventive health'
       ],
       nextSteps: [
-        '📱 Continue using the health tracker daily',
-        '🏥 Share this general health analysis with your healthcare provider',
-        '📈 Monitor for any changes in your health patterns',
-        '🌱 Consider lifestyle modifications based on these insights'
+        'Continue using the health tracker daily',
+        'Share this general health analysis with your healthcare provider',
+        'Monitor for any changes in your health patterns',
+        'Consider lifestyle modifications based on these insights'
       ],
       disclaimer: "This is a general health analysis based on your logged data. For comprehensive medical evaluation, please consult with your healthcare provider. This analysis is for informational purposes only and should not replace professional medical advice."
     };
@@ -170,68 +170,68 @@ class AIService {
     const avgSleep = logs.reduce((sum, log) => sum + log.sleep, 0) / logs.length;
     
     const patterns = [
-      `🔍 Root Cause Analysis: Primary symptoms are ${commonSymptoms.join(', ')}`,
-      `📊 Symptom Severity: ${avgSeverity.toFixed(1)}/10 average - requires medical investigation`,
-      `😴 Sleep Impact: ${avgSleep.toFixed(1)} hours average - may indicate underlying condition`,
-      `📈 Medical Trend: ${this.getSeverityTrend(logs)}`,
-      `🚨 Medical Alert: Symptom pattern suggests systematic health issue`
+      `Root Cause Analysis: Primary symptoms are ${commonSymptoms.join(', ')}`,
+      `Symptom Severity: ${avgSeverity.toFixed(1)}/10 average - requires medical investigation`,
+      `Sleep Impact: ${avgSleep.toFixed(1)} hours average - may indicate underlying condition`,
+      `Medical Trend: ${this.getSeverityTrend(logs)}`,
+      `Medical Alert: Symptom pattern suggests systematic health issue`
     ];
 
     // Include lab work patterns for medical analysis
     if (labWork.length > 0) {
-      patterns.push(`🔬 Medical Lab Data: ${labWork.length} entries analyzed for root cause`);
+      patterns.push(`Medical Lab Data: ${labWork.length} entries analyzed for root cause`);
       
       const abnormalResults = labWork.flatMap(lab => 
         lab.tests.filter(test => test.status && ['abnormal', 'high', 'low', 'critical'].includes(test.status))
       );
       
       if (abnormalResults.length > 0) {
-        patterns.push(`⚠️ CRITICAL FINDINGS: ${abnormalResults.length} abnormal lab values detected`);
+        patterns.push(`CRITICAL FINDINGS: ${abnormalResults.length} abnormal lab values detected`);
         const criticalResults = abnormalResults.filter(test => test.status === 'critical');
         if (criticalResults.length > 0) {
-          patterns.push(`🚨 URGENT: ${criticalResults.length} critical lab values require IMMEDIATE medical attention`);
+          patterns.push(`URGENT: ${criticalResults.length} critical lab values require IMMEDIATE medical attention`);
         }
       }
     }
 
     // Include medical test patterns
     if (medicalTests.length > 0) {
-      patterns.push(`📋 Medical Imaging/Tests: ${medicalTests.length} entries analyzed for symptom correlation`);
+      patterns.push(`Medical Imaging/Tests: ${medicalTests.length} entries analyzed for symptom correlation`);
     }
     
     return {
       patterns,
       potentialCauses: [
-        '🚨 Inflammatory conditions (requires immediate medical evaluation)',
-        '🔬 Autoimmune disorders (blood work and specialist consultation needed)',
-        '⚖️ Hormonal imbalances (endocrine evaluation recommended)',
-        '🧠 Chronic stress syndrome (multidisciplinary assessment)',
-        '🥗 Nutritional deficiencies (laboratory testing suggested)',
-        '😴 Sleep disorders (sleep study consideration)',
-        '💊 Medication side effects (pharmacological review)',
-        '🌍 Environmental or infectious triggers (specialist evaluation)'
+        'Inflammatory conditions (requires immediate medical evaluation)',
+        'Autoimmune disorders (blood work and specialist consultation needed)',
+        'Hormonal imbalances (endocrine evaluation recommended)',
+        'Chronic stress syndrome (multidisciplinary assessment)',
+        'Nutritional deficiencies (laboratory testing suggested)',
+        'Sleep disorders (sleep study consideration)',
+        'Medication side effects (pharmacological review)',
+        'Environmental or infectious triggers (specialist evaluation)'
       ],
       recommendations: [
-        '🚨 CRITICAL: Discuss these root cause hypotheses with your doctor immediately',
-        '🔬 Request comprehensive blood work and physical examination',
-        '👨‍⚕️ Consider specialist referrals as recommended by physician',
-        '📝 Prepare detailed symptom timeline for medical consultation',
-        '📋 Bring this root cause analysis to your next medical appointment'
+        'CRITICAL: Discuss these root cause hypotheses with your doctor immediately',
+        'Request comprehensive blood work and physical examination',
+        'Consider specialist referrals as recommended by physician',
+        'Prepare detailed symptom timeline for medical consultation',
+        'Bring this root cause analysis to your next medical appointment'
       ],
       riskFactors: [
-        '🚨 Persistent symptoms requiring urgent professional medical evaluation',
-        '🔍 Multiple symptom patterns suggesting systematic root causes',
-        '⚠️ Impact on daily functioning and quality of life',
-        '🏥 Need for proper diagnostic workup and testing'
+        'Persistent symptoms requiring urgent professional medical evaluation',
+        'Multiple symptom patterns suggesting systematic root causes',
+        'Impact on daily functioning and quality of life',
+        'Need for proper diagnostic workup and testing'
       ],
       nextSteps: [
-        '🏥 URGENT: Schedule appointment with healthcare provider',
-        '📋 Prepare comprehensive list of symptoms for doctor visit',
-        '🔬 Request specific diagnostic tests based on these hypotheses',
-        '📝 Continue detailed symptom tracking until medical consultation',
-        '💊 Review all medications with doctor for potential interactions'
+        'URGENT: Schedule appointment with healthcare provider',
+        'Prepare comprehensive list of symptoms for doctor visit',
+        'Request specific diagnostic tests based on these hypotheses',
+        'Continue detailed symptom tracking until medical consultation',
+        'Review all medications with doctor for potential interactions'
       ],
-      disclaimer: "🚨 MEDICAL DISCLAIMER: These are potential ROOT CAUSE hypotheses only and require immediate professional medical evaluation. This analysis is NOT a diagnosis and should not replace urgent consultation with qualified healthcare providers. Please discuss all symptoms and potential root causes with your doctor, who can order appropriate tests and provide proper medical assessment."
+      disclaimer: "MEDICAL DISCLAIMER: These are potential ROOT CAUSE hypotheses only and require immediate professional medical evaluation. This analysis is NOT a diagnosis and should not replace urgent consultation with qualified healthcare providers. Please discuss all symptoms and potential root causes with your doctor, who can order appropriate tests and provide proper medical assessment."
     };
   }
 

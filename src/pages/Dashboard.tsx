@@ -76,14 +76,29 @@ const Dashboard = () => {
       return;
     }
 
+    // Check if this is a single log analysis
+    const isSingleLog = healthLogs.length === 1;
+    if (isSingleLog) {
+      toast({
+        title: "Single Log Analysis",
+        description: "Generating insights from your single log entry. For more accurate analysis, consider logging 7+ entries over time.",
+      });
+    }
+
     console.log('🚀 Starting General AI Analysis - setting loading to true');
     setIsAnalyzing(true);
     
     try {
-      // Run general AI analysis with all available data
-      console.log('🧠 Starting general AI analysis...');
-      const aiAnalysis = await aiService.generateGeneralAnalysis(healthLogs, labWork, medicalTests);
-      console.log('✅ General AI analysis completed:', aiAnalysis);
+      // Run appropriate AI analysis based on data amount
+      console.log('🧠 Starting AI analysis...');
+      let aiAnalysis;
+      if (isSingleLog) {
+        aiAnalysis = await aiService.generateSingleLogAnalysis(healthLogs, labWork, medicalTests);
+        console.log('✅ Single log AI analysis completed:', aiAnalysis);
+      } else {
+        aiAnalysis = await aiService.generateGeneralAnalysis(healthLogs, labWork, medicalTests);
+        console.log('✅ General AI analysis completed:', aiAnalysis);
+      }
       setAnalysis(aiAnalysis);
       
       // Try Reddit search separately, don't let it fail the main analysis
@@ -129,14 +144,29 @@ const Dashboard = () => {
       return;
     }
 
+    // Check if this is a single log analysis
+    const isSingleLog = healthLogs.length === 1;
+    if (isSingleLog) {
+      toast({
+        title: "Single Log Medical Analysis",
+        description: "Generating medical hypotheses from your single log entry. For more accurate analysis, consider logging 7+ entries over time.",
+      });
+    }
+
     console.log('🚀 Starting Medical Hypotheses - setting loading to true');
     setIsGeneratingHypotheses(true);
     
     try {
-      // Run medical hypotheses first with all available data
+      // Run medical hypotheses with appropriate analysis type
       console.log('🧬 Starting medical hypotheses generation...');
-      const medicalAnalysis = await aiService.generateMedicalHypotheses(healthLogs, labWork, medicalTests);
-      console.log('✅ Medical hypotheses completed:', medicalAnalysis);
+      let medicalAnalysis;
+      if (isSingleLog) {
+        medicalAnalysis = await aiService.generateSingleLogAnalysis(healthLogs, labWork, medicalTests);
+        console.log('✅ Single log medical analysis completed:', medicalAnalysis);
+      } else {
+        medicalAnalysis = await aiService.generateMedicalHypotheses(healthLogs, labWork, medicalTests);
+        console.log('✅ Medical hypotheses completed:', medicalAnalysis);
+      }
       setMedicalHypotheses(medicalAnalysis);
       
       // Try Reddit search separately, don't let it fail the main analysis
@@ -264,7 +294,7 @@ const Dashboard = () => {
                   AI Analysis
                 </CardTitle>
                 <CardDescription>
-                  Get comprehensive AI-powered insights from your health logs, lab work, and medical tests
+                  Get AI-powered insights from your health data. Works with just one log entry, but 7+ logs provide better accuracy.
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -281,10 +311,15 @@ const Dashboard = () => {
                   ) : (
                     <>
                       <Brain className="mr-2 h-4 w-4" />
-                      Generate AI Analysis ({healthLogs.length + labWork.length + medicalTests.length} records)
+                      {healthLogs.length === 1 ? 'Quick Analysis (1 log)' : `Generate AI Analysis (${healthLogs.length + labWork.length + medicalTests.length} records)`}
                     </>
                   )}
                 </Button>
+                {healthLogs.length === 1 && (
+                  <p className="text-xs text-muted-foreground mt-2 text-center">
+                    ⚠️ Single log analysis - consider logging more entries for better insights
+                  </p>
+                )}
               </CardContent>
             </Card>
 
@@ -295,7 +330,7 @@ const Dashboard = () => {
                   Generate Hypotheses
                 </CardTitle>
                 <CardDescription>
-                  Create medical hypotheses based on your symptom patterns, lab results, and test data
+                  Create medical hypotheses based on your symptom patterns, lab results, and test data. Works with single logs but 7+ logs provide better accuracy.
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -312,10 +347,15 @@ const Dashboard = () => {
                   ) : (
                     <>
                       <Brain className="mr-2 h-4 w-4" />
-                      Generate Medical Hypotheses ({healthLogs.length + labWork.length + medicalTests.length} records)
+                      {healthLogs.length === 1 ? 'Quick Medical Analysis (1 log)' : `Generate Medical Hypotheses (${healthLogs.length + labWork.length + medicalTests.length} records)`}
                     </>
                   )}
                 </Button>
+                {healthLogs.length === 1 && (
+                  <p className="text-xs text-muted-foreground mt-2 text-center">
+                    ⚠️ Single log analysis - consider logging more entries for better insights
+                  </p>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -334,7 +374,7 @@ const Dashboard = () => {
                   <X className="h-4 w-4" />
                 </Button>
               </div>
-              <AIAnalysisCard analysis={analysis} />
+              <AIAnalysisCard analysis={analysis} isSingleLog={healthLogs.length === 1} />
             </div>
           )}
 
@@ -352,7 +392,7 @@ const Dashboard = () => {
                   <X className="h-4 w-4" />
                 </Button>
               </div>
-              <AIAnalysisCard analysis={medicalHypotheses} />
+              <AIAnalysisCard analysis={medicalHypotheses} isSingleLog={healthLogs.length === 1} />
             </div>
           )}
 

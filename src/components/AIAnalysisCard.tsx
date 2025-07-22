@@ -5,9 +5,10 @@ import type { HypothesisAnalysis } from '@/types/health';
 
 interface AIAnalysisCardProps {
   analysis: HypothesisAnalysis;
+  isSingleLog?: boolean;
 }
 
-export function AIAnalysisCard({ analysis }: AIAnalysisCardProps) {
+export function AIAnalysisCard({ analysis, isSingleLog = false }: AIAnalysisCardProps) {
   return (
     <Card className="mb-8 shadow-insight">
       <CardHeader className="bg-gradient-accent">
@@ -17,6 +18,11 @@ export function AIAnalysisCard({ analysis }: AIAnalysisCardProps) {
         </CardTitle>
         <CardDescription className="text-accent-foreground/80">
           AI-generated insights and hypotheses from your health logs
+          {isSingleLog && (
+            <span className="block mt-1 text-yellow-200 font-medium">
+              ⚠️ Single Log Analysis - Limited Data
+            </span>
+          )}
         </CardDescription>
       </CardHeader>
       <CardContent className="p-6 space-y-6">

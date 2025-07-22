@@ -6,10 +6,12 @@ The Health Detective AI app now includes real AI-powered hypothesis generation u
 ## Features
 
 ### 🤖 AI-Powered Analysis
+- **Quick Analysis**: Get immediate insights from just one health log entry
 - **Pattern Recognition**: Identifies temporal patterns, symptom correlations, and lifestyle factors
 - **Hypothesis Generation**: Suggests potential causes and triggers for your symptoms
 - **Risk Assessment**: Highlights factors that may require medical attention
 - **Personalized Recommendations**: Provides actionable steps based on your data
+- **Data Quality Warnings**: Alerts users when analysis is based on limited data
 
 ### 📊 Analysis Categories
 
@@ -44,11 +46,25 @@ The Health Detective AI app now includes real AI-powered hypothesis generation u
 
 ## How to Use
 
-1. **Log Your Health Data**: Enter at least 3 health logs with symptoms, medications, severity, mood, and sleep data
+### Quick Analysis (Single Log)
+1. **Log Your Health Data**: Enter at least 1 health log with symptoms, medications, severity, mood, and sleep data
 2. **Navigate to Dashboard**: Go to the Dashboard page to view your logs
-3. **Generate Hypotheses**: Click "Generate Hypotheses" to start AI analysis
+3. **Generate Quick Analysis**: Click "Quick Analysis (1 log)" to get immediate insights
+4. **Review Results**: Examine the AI-generated preliminary insights and recommendations
+5. **Continue Logging**: Add more logs over time for more accurate analysis
+
+### Comprehensive Analysis (Recommended)
+1. **Log Your Health Data**: Enter at least 7 health logs with symptoms, medications, severity, mood, and sleep data
+2. **Navigate to Dashboard**: Go to the Dashboard page to view your logs
+3. **Generate Hypotheses**: Click "Generate AI Analysis" or "Generate Medical Hypotheses" to start comprehensive AI analysis
 4. **Review Results**: Examine the AI-generated insights and recommendations
 5. **Take Action**: Follow the recommended next steps and consult healthcare providers as needed
+
+### Data Quality Recommendations
+- **Single Log**: Provides immediate preliminary insights but limited accuracy
+- **3-6 Logs**: Better pattern recognition and more reliable insights
+- **7+ Logs**: Optimal for comprehensive analysis and accurate pattern identification
+- **Lab Work & Tests**: Adding lab results and medical tests significantly improves analysis quality
 
 ## Privacy & Security
 
