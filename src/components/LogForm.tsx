@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Calendar, Plus, X, Activity, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useHealthData } from '@/hooks/useHealthData';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface LogFormProps {
   onLogAdded?: () => void;
@@ -17,6 +18,7 @@ interface LogFormProps {
 export function LogForm({ onLogAdded }: LogFormProps) {
   const { toast } = useToast();
   const { saveHealthLog } = useHealthData();
+  const { user, isGuest } = useAuth();
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [symptoms, setSymptoms] = useState<string[]>([]);
@@ -27,6 +29,8 @@ export function LogForm({ onLogAdded }: LogFormProps) {
   const [mood, setMood] = useState('');
   const [sleep, setSleep] = useState('7');
   const [notes, setNotes] = useState('');
+  
+
 
   const addSymptom = () => {
     if (newSymptom.trim() && !symptoms.includes(newSymptom.trim())) {
@@ -111,6 +115,7 @@ export function LogForm({ onLogAdded }: LogFormProps) {
 
   return (
     <Card className="shadow-medical">
+
       <CardHeader className="bg-gradient-subtle">
         <div className="flex items-center gap-2">
           <Activity className="h-5 w-5 text-primary" />
@@ -121,6 +126,8 @@ export function LogForm({ onLogAdded }: LogFormProps) {
         </CardDescription>
       </CardHeader>
       <CardContent className="p-6">
+
+        
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Date Display */}
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -262,6 +269,7 @@ export function LogForm({ onLogAdded }: LogFormProps) {
               rows={3}
             />
           </div>
+
 
           <Button 
             type="submit" 
