@@ -90,14 +90,6 @@ class AIService {
     }
   }
 
-  // Legacy method for backward compatibility - now calls general analysis
-  async generateHypothesis(logs: HealthLog[], labWork: LabWork[] = [], medicalTests: MedicalTest[] = []): Promise<HypothesisAnalysis> {
-    return this.generateGeneralAnalysis(logs, labWork, medicalTests);
-  }
-
-  // This method is no longer needed as formatting is done in the Edge Function
-  // Keeping it for potential future use or local fallback
-
   private generateFallbackAnalysis(logs: HealthLog[], labWork: LabWork[] = [], medicalTests: MedicalTest[] = []): HypothesisAnalysis {
     console.log('Generating GENERAL HEALTH fallback analysis based on local data');
     
