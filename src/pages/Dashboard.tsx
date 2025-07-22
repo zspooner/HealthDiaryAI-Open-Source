@@ -13,14 +13,15 @@ import { redditSearchService } from '@/services/redditSearch';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Brain, Loader2, LogOut, User, TrendingUp, TestTube, Activity, X } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Brain, Loader2, LogOut, User, TrendingUp, TestTube, Activity, X, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { HypothesisAnalysis } from '@/services/ai';
 import type { RedditSearchResult } from '@/services/redditSearch';
 import type { LabWork, MedicalTest } from '@/types/health';
 
 const Dashboard = () => {
-  const { user, signOut } = useAuth();
+  const { user, signOut, isGuest } = useAuth();
   const { healthLogs, loading } = useHealthData();
   const { toast } = useToast();
   
@@ -240,6 +241,17 @@ const Dashboard = () => {
         </div>
 
         <div className="container mx-auto px-4 py-8">
+          {/* Guest Mode Warning */}
+          {isGuest && (
+            <Alert className="mb-6 border-amber-200 bg-amber-50 text-amber-800">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription>
+                <strong>Guest Mode:</strong> You're browsing as a guest. Your data is temporary and will be lost when you refresh the page or close the browser. 
+                <a href="/auth" className="ml-2 underline hover:no-underline">Sign up</a> to save your data permanently.
+              </AlertDescription>
+            </Alert>
+          )}
+
           {/* Stats Overview */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <Card className="shadow-card">

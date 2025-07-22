@@ -25,7 +25,7 @@ export interface Hypothesis {
 }
 
 export const useHealthData = () => {
-  const { user, session } = useAuth();
+  const { user, session, isGuest } = useAuth();
   const { toast } = useToast();
   
   const [healthLogs, setHealthLogs] = useState<HealthLog[]>([]);
@@ -133,27 +133,33 @@ export const useHealthData = () => {
     }
   };
 
-  // Load health data from Supabase
+  // Load health data from Supabase or initialize empty for guests
   const loadHealthData = async () => {
-    // Allow guest users to load data (no user check)
-
     setLoading(true);
     
     try {
-      // Load health logs
-      let query = supabase
-        .from('health_logs')
-        .select('*');
-      
-      if (user?.id) {
-        // User is logged in - get their data and guest data
-        query = query.or(`user_id.eq.${user.id},user_id.is.null`);
-      } else {
-        // Guest mode - only get guest data (null user_id)
-        query = query.is('user_id', null);
+      // Guest mode: no data persistence - start fresh every session
+      if (isGuest) {
+        setHealthLogs([]);
+        setHypotheses([]);
+        setLoading(false);
+        return;
       }
-      
-      const { data: logsData, error: logsError } = await query.order('created_at', { ascending: false });
+
+      // Authenticated user: load from database
+      if (!user?.id) {
+        setHealthLogs([]);
+        setHypotheses([]);
+        setLoading(false);
+        return;
+      }
+
+      // Load health logs for authenticated users only
+      const { data: logsData, error: logsError } = await supabase
+        .from('health_logs')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
 
       if (logsError) throw logsError;
 
@@ -176,20 +182,12 @@ export const useHealthData = () => {
 
       setHealthLogs(formattedLogs);
 
-      // Load hypotheses
-      let hypsQuery = supabase
+      // Load hypotheses for authenticated users only
+      const { data: hypsData, error: hypsError } = await supabase
         .from('hypotheses')
-        .select('*');
-      
-      if (user?.id) {
-        // User is logged in - get their data and guest data
-        hypsQuery = hypsQuery.or(`user_id.eq.${user.id},user_id.is.null`);
-      } else {
-        // Guest mode - only get guest data (null user_id)
-        hypsQuery = hypsQuery.is('user_id', null);
-      }
-      
-      const { data: hypsData, error: hypsError } = await hypsQuery.order('created_at', { ascending: false });
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
 
       if (hypsError) throw hypsError;
 
@@ -207,13 +205,38 @@ export const useHealthData = () => {
     }
   };
 
-  // Save health log to Supabase
+  // Save health log - in memory for guests, database for authenticated users
   const saveHealthLog = async (log: Omit<HealthLog, 'id'>) => {
-    // Allow guest users (no user check)
-
     try {
+      // Guest mode: store only in memory (no database persistence)
+      if (isGuest) {
+        const newLog: HealthLog = {
+          id: `guest-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          ...log
+        };
+
+        setHealthLogs(prev => [newLog, ...prev]);
+
+        toast({
+          title: "Health Log Added",
+          description: "Your health log has been added to this session (not saved permanently).",
+        });
+
+        return newLog;
+      }
+
+      // Authenticated user: save to database
+      if (!user?.id) {
+        toast({
+          title: "Authentication Required",
+          description: "Please sign in to save your health data permanently.",
+          variant: "destructive",
+        });
+        return null;
+      }
+
       const supabaseLog = {
-        user_id: user?.id || null, // Allow null for guest users
+        user_id: user.id,
         notes: log.notes,
         symptoms: log.symptoms.join(', '),
         meds: log.medications.join(', '),
@@ -255,13 +278,39 @@ export const useHealthData = () => {
     }
   };
 
-  // Save hypothesis to Supabase
+  // Save hypothesis - in memory for guests, database for authenticated users
   const saveHypothesis = async (hypothesis: Omit<Hypothesis, 'id' | 'created_at'>) => {
-    // Allow guest users (no user check)
-
     try {
+      // Guest mode: store only in memory (no database persistence)
+      if (isGuest) {
+        const newHypothesis: Hypothesis = {
+          id: `guest-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          created_at: new Date().toISOString(),
+          ...hypothesis
+        };
+
+        setHypotheses(prev => [newHypothesis, ...prev]);
+
+        toast({
+          title: "Hypothesis Added",
+          description: "Your hypothesis has been added to this session (not saved permanently).",
+        });
+
+        return newHypothesis;
+      }
+
+      // Authenticated user: save to database
+      if (!user?.id) {
+        toast({
+          title: "Authentication Required",
+          description: "Please sign in to save your health data permanently.",
+          variant: "destructive",
+        });
+        return null;
+      }
+
       const supabaseHypothesis = {
-        user_id: user?.id || null, // Allow null for guest users
+        user_id: user.id,
         ...hypothesis
       };
 
@@ -292,25 +341,34 @@ export const useHealthData = () => {
     }
   };
 
-  // Delete health log
+  // Delete health log - only for authenticated users
   const deleteHealthLog = async (id: string) => {
-    // Allow guest users to delete their logs
-
     try {
-      let query = supabase
+      // Guest mode: only remove from memory
+      if (isGuest) {
+        setHealthLogs(prev => prev.filter(log => log.id !== id));
+        toast({
+          title: "Log Removed",
+          description: "Health log has been removed from this session.",
+        });
+        return;
+      }
+
+      // Authenticated user: delete from database
+      if (!user?.id) {
+        toast({
+          title: "Authentication Required",
+          description: "Please sign in to manage your health data.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const { error } = await supabase
         .from('health_logs')
         .delete()
-        .eq('id', id);
-      
-      if (user?.id) {
-        // User is logged in - ensure they can only delete their own logs
-        query = query.eq('user_id', user.id);
-      } else {
-        // Guest mode - can only delete guest logs (null user_id)
-        query = query.is('user_id', null);
-      }
-      
-      const { error } = await query;
+        .eq('id', id)
+        .eq('user_id', user.id);
 
       if (error) throw error;
 
@@ -332,16 +390,15 @@ export const useHealthData = () => {
 
   useEffect(() => {
     if (user && session) {
-      // First migrate any existing localStorage data
+      // First migrate any existing localStorage data, then load from database
       migrateLocalStorageData().then(() => {
-        // Then load data from Supabase
         loadHealthData();
       });
     } else {
-      // Guest mode or not logged in - load guest data
+      // Guest mode or not authenticated - load appropriate data
       loadHealthData();
     }
-  }, [user, session]);
+  }, [user, session, isGuest]);
 
   return {
     healthLogs,
