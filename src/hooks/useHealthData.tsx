@@ -158,7 +158,7 @@ export const useHealthData = () => {
       // Convert Supabase format back to frontend format
       const formattedLogs: HealthLog[] = (logsData || []).map(log => {
         // Parse habits field to extract severity, mood, sleep
-        const habitsMatch = log.habits?.match(/Severity: (\d+), Mood: ([^,]+), Sleep: ([\d.]+)h/);
+        const habitsMatch = log.habits?.match(/Severity: (\d{1,2}), Mood: ([^,]*), Sleep: ([\d.]+)h/);
         
         return {
           id: log.id,
@@ -215,10 +215,11 @@ export const useHealthData = () => {
         notes: log.notes,
         symptoms: log.symptoms.join(', '),
         meds: log.medications.join(', '),
-        habits: `Severity: ${log.severity}, Mood: ${log.mood}, Sleep: ${log.sleep}h`,
+        habits: `Severity: ${Number.isFinite(log.severity) ? log.severity : 0}, Mood: ${log.mood}, Sleep: ${log.sleep}h`,
         created_at: log.date,
         updated_at: new Date().toISOString()
       };
+      console.log('Saving health log with habits:', supabaseLog.habits);
 
       const { data, error } = await supabase
         .from('health_logs')

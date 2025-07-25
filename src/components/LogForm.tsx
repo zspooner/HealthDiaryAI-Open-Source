@@ -98,7 +98,7 @@ export function LogForm({ onLogAdded }: LogFormProps) {
 
         toast({
           title: "Health log recorded",
-          description: "Your daily health data has been saved successfully.",
+          description: "Your daily health data has been saved successfully. (you may need to refresh to see it)",
         });
       }
     } catch (error) {
