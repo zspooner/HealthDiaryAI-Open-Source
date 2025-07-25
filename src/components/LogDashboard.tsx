@@ -6,6 +6,9 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Activity, Calendar, Clock, Heart, Pill, Search, TrendingUp, Brain } from 'lucide-react';
 import type { HealthLog } from '@/types/health';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { useHealthData } from '@/hooks/useHealthData';
+import { LogForm } from './LogForm';
 
 interface LogDashboardProps {
   logs: HealthLog[];
@@ -17,6 +20,8 @@ export function LogDashboard({ logs, onAnalyze }: LogDashboardProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [severityFilter, setSeverityFilter] = useState('all');
   const [moodFilter, setMoodFilter] = useState('all');
+  const { updateHealthLog } = useHealthData();
+  const [editingLog, setEditingLog] = useState<HealthLog | null>(null);
 
   useEffect(() => {
     let filtered = logs;
@@ -225,6 +230,9 @@ export function LogDashboard({ logs, onAnalyze }: LogDashboardProps) {
                       {getMoodEmoji(log.mood)} {log.mood}
                     </Badge>
                   )}
+                  <Button size="sm" variant="outline" onClick={() => setEditingLog(log)}>
+                    Edit
+                  </Button>
                 </div>
               </div>
             </CardHeader>
@@ -288,6 +296,24 @@ export function LogDashboard({ logs, onAnalyze }: LogDashboardProps) {
           </Card>
         ))}
       </div>
+      {/* Edit Log Modal */}
+      <Dialog open={!!editingLog} onOpenChange={open => !open && setEditingLog(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Health Log</DialogTitle>
+          </DialogHeader>
+          {editingLog && (
+            <LogForm
+              initialLog={editingLog}
+              onLogSaved={async (updatedLog) => {
+                await updateHealthLog(editingLog.id, updatedLog);
+                setEditingLog(null);
+              }}
+              editMode
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

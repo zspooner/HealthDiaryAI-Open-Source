@@ -10,25 +10,29 @@ import { Calendar, Plus, X, Activity, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useHealthData } from '@/hooks/useHealthData';
 import { useAuth } from '@/contexts/AuthContext';
+import { HealthLog } from '@/types/health';
 
 interface LogFormProps {
   onLogAdded?: () => void;
+  initialLog?: HealthLog;
+  editMode?: boolean;
+  onLogSaved?: (log: Omit<HealthLog, 'id'>) => void;
 }
 
-export function LogForm({ onLogAdded }: LogFormProps) {
+export function LogForm({ onLogAdded, initialLog, editMode, onLogSaved }: LogFormProps) {
   const { toast } = useToast();
   const { saveHealthLog } = useHealthData();
   const { user } = useAuth();
   
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [symptoms, setSymptoms] = useState<string[]>([]);
-  const [medications, setMedications] = useState<string[]>([]);
+  const [symptoms, setSymptoms] = useState<string[]>(initialLog ? initialLog.symptoms : []);
+  const [medications, setMedications] = useState<string[]>(initialLog ? initialLog.medications : []);
   const [newSymptom, setNewSymptom] = useState('');
   const [newMedication, setNewMedication] = useState('');
-  const [severity, setSeverity] = useState('3');
-  const [mood, setMood] = useState('');
-  const [sleep, setSleep] = useState('7');
-  const [notes, setNotes] = useState('');
+  const [severity, setSeverity] = useState(initialLog ? initialLog.severity.toString() : '3');
+  const [mood, setMood] = useState(initialLog ? initialLog.mood : '');
+  const [sleep, setSleep] = useState(initialLog ? initialLog.sleep.toString() : '7');
+  const [notes, setNotes] = useState(initialLog ? initialLog.notes : '');
   
 
 
@@ -69,7 +73,7 @@ export function LogForm({ onLogAdded }: LogFormProps) {
     setIsSubmitting(true);
     
     const logData = {
-      date: new Date().toISOString(),
+      date: initialLog ? initialLog.date : new Date().toISOString(),
       symptoms,
       medications,
       severity: parseInt(severity),
@@ -79,33 +83,41 @@ export function LogForm({ onLogAdded }: LogFormProps) {
     };
 
     try {
-      const savedLog = await saveHealthLog(logData);
-      
-      if (savedLog) {
-        // Reset form
-        setSymptoms([]);
-        setMedications([]);
-        setNewSymptom('');
-        setNewMedication('');
-        setSeverity('3');
-        setMood('');
-        setSleep('7');
-        setNotes('');
-
-        if (onLogAdded) {
-          onLogAdded();
-        }
-
+      if (editMode && onLogSaved) {
+        await onLogSaved(logData);
         toast({
-          title: "Health log recorded",
-          description: "Your daily health data has been saved. You may need to refresh to see updates.",
+          title: "Health log updated",
+          description: "Your health log has been updated successfully.",
         });
+      } else {
+        const savedLog = await saveHealthLog(logData);
+      
+        if (savedLog) {
+          // Reset form
+          setSymptoms([]);
+          setMedications([]);
+          setNewSymptom('');
+          setNewMedication('');
+          setSeverity('3');
+          setMood('');
+          setSleep('7');
+          setNotes('');
+
+          if (onLogAdded) {
+            onLogAdded();
+          }
+
+          toast({
+            title: "Health log recorded",
+            description: "Your daily health data has been saved. You may need to refresh to see updates.",
+          });
+        }
       }
     } catch (error) {
       console.error('Error saving health log:', error);
       toast({
-        title: "Error saving log",
-        description: "There was an issue saving your health log. Please try again.",
+        title: editMode ? "Error updating log" : "Error saving log",
+        description: editMode ? "There was an issue updating your health log. Please try again." : "There was an issue saving your health log. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -132,7 +144,12 @@ export function LogForm({ onLogAdded }: LogFormProps) {
           {/* Date Display */}
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Calendar className="h-4 w-4" />
-            {new Date().toLocaleDateString('en-US', { 
+            {initialLog ? new Date(initialLog.date).toLocaleDateString('en-US', { 
+              weekday: 'long', 
+              year: 'numeric', 
+              month: 'long', 
+              day: 'numeric' 
+            }) : new Date().toLocaleDateString('en-US', { 
               weekday: 'long', 
               year: 'numeric', 
               month: 'long', 
