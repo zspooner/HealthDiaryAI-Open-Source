@@ -87,7 +87,7 @@ export function LogForm({ onLogAdded, initialLog, editMode, onLogSaved }: LogFor
         await onLogSaved(logData);
         toast({
           title: "Health log updated",
-          description: "Your health log has been updated successfully.",
+          description: "Your health log has been updated successfully. You may need to refresh to see updates.",
         });
       } else {
         const savedLog = await saveHealthLog(logData);
