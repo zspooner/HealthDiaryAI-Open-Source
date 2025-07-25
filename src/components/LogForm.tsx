@@ -98,7 +98,7 @@ export function LogForm({ onLogAdded }: LogFormProps) {
 
         toast({
           title: "Health log recorded",
-          description: "Your daily health data has been saved. The dashboard will update shortly.",
+          description: "Your daily health data has been saved. You may need to refresh to see updates.",
         });
       }
     } catch (error) {
