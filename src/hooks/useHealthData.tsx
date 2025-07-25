@@ -254,6 +254,51 @@ export const useHealthData = () => {
     }
   };
 
+  // Update health log for authenticated users only
+  const updateHealthLog = async (id: string, log: Omit<HealthLog, 'id'>) => {
+    try {
+      if (!user?.id) {
+        toast({
+          title: "Authentication Required",
+          description: "Please sign in to update your health data.",
+          variant: "destructive",
+        });
+        return null;
+      }
+      const supabaseLog = {
+        notes: log.notes,
+        symptoms: log.symptoms.join(', '),
+        meds: log.medications.join(', '),
+        habits: `Severity: ${Number.isFinite(log.severity) ? log.severity : 0}, Mood: ${log.mood}, Sleep: ${log.sleep}h`,
+        updated_at: new Date().toISOString(),
+        user_id: user.id,
+      };
+      const { data, error } = await supabase
+        .from('health_logs')
+        .update(supabaseLog)
+        .eq('id', id)
+        .eq('user_id', user.id)
+        .select()
+        .single();
+      if (error) throw error;
+      // Update local state
+      setHealthLogs(prev => prev.map(l => l.id === id ? { id, ...log } : l));
+      toast({
+        title: "Health Log Updated",
+        description: "Your health log has been updated successfully.",
+      });
+      return { id, ...log };
+    } catch (error) {
+      console.error('Error updating health log:', error);
+      toast({
+        title: "Error Updating Log",
+        description: "There was an issue updating your health log.",
+        variant: "destructive",
+      });
+      return null;
+    }
+  };
+
   // Save hypothesis to database for authenticated users only
   const saveHypothesis = async (hypothesis: Omit<Hypothesis, 'id' | 'created_at'>) => {
     try {
@@ -354,9 +399,11 @@ export const useHealthData = () => {
     healthLogs,
     hypotheses,
     loading,
+    migrateLocalStorageData,
+    loadHealthData,
     saveHealthLog,
+    updateHealthLog,
     saveHypothesis,
     deleteHealthLog,
-    refreshData: loadHealthData
   };
 };
