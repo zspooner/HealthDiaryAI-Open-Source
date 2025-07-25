@@ -110,40 +110,6 @@ export function AIAnalysisCard({ analysis, isSingleLog = false }: AIAnalysisCard
           </div>
         )}
 
-        {/* Risk Factors */}
-        {analysis.riskFactors.length > 0 && (
-          <div>
-            <h4 className="font-semibold text-foreground mb-3 flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4 text-orange-500" />
-              Risk Factors to Monitor
-            </h4>
-            <ul className="space-y-2">
-              {analysis.riskFactors.map((risk, index) => (
-                <li key={index} className="text-foreground ml-4 flex items-start gap-2">
-                  <span className="text-orange-500 mt-1">•</span>
-                  <span>{risk}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-
-        {/* Next Steps */}
-        <div>
-          <h4 className="font-semibold text-foreground mb-3 flex items-center gap-2">
-            <ArrowRight className="h-4 w-4 text-primary" />
-            Recommended Next Steps
-          </h4>
-          <ul className="space-y-2">
-            {analysis.nextSteps.map((step, index) => (
-              <li key={index} className="text-foreground ml-4 flex items-start gap-2">
-                <span className="text-primary mt-1">•</span>
-                <span>{step}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-
         {/* Disclaimer */}
         <div className="mt-6 p-4 bg-muted/50 rounded-lg border-l-4 border-orange-500">
           <div className="flex items-start gap-2">
